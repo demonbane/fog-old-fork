@@ -30,11 +30,12 @@ require 'fog/local'
 require 'fog/rackspace'
 require 'fog/slicehost'
 require 'fog/terremark'
+require 'fog/vcloud'
 
 module Fog
 
   unless const_defined?(:VERSION)
-    VERSION = '0.0.91'
+    VERSION = '0.0.93'
   end
 
   module Mock

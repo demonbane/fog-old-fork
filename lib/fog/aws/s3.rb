@@ -9,21 +9,30 @@ module Fog
           require 'fog/aws/models/s3/directory'
           require 'fog/aws/models/s3/files'
           require 'fog/aws/models/s3/file'
+          require 'fog/aws/parsers/s3/access_control_list'
           require 'fog/aws/parsers/s3/copy_object'
           require 'fog/aws/parsers/s3/get_bucket'
           require 'fog/aws/parsers/s3/get_bucket_location'
+          require 'fog/aws/parsers/s3/get_bucket_versioning'
           require 'fog/aws/parsers/s3/get_request_payment'
           require 'fog/aws/parsers/s3/get_service'
           require 'fog/aws/requests/s3/copy_object'
           require 'fog/aws/requests/s3/delete_bucket'
           require 'fog/aws/requests/s3/delete_object'
           require 'fog/aws/requests/s3/get_bucket'
+          require 'fog/aws/requests/s3/get_bucket_acl'
           require 'fog/aws/requests/s3/get_bucket_location'
+          require 'fog/aws/requests/s3/get_bucket_versioning'
           require 'fog/aws/requests/s3/get_object'
+          require 'fog/aws/requests/s3/get_object_acl'
+          require 'fog/aws/requests/s3/get_object_torrent'
+          require 'fog/aws/requests/s3/get_object_url'
           require 'fog/aws/requests/s3/get_request_payment'
           require 'fog/aws/requests/s3/get_service'
           require 'fog/aws/requests/s3/head_object'
           require 'fog/aws/requests/s3/put_bucket'
+          require 'fog/aws/requests/s3/put_bucket_acl'
+          require 'fog/aws/requests/s3/put_bucket_versioning'
           require 'fog/aws/requests/s3/put_object'
           require 'fog/aws/requests/s3/put_request_payment'
           @required = true
@@ -141,12 +150,12 @@ module Fog
 
         private
 
-        def request(params)
+        def request(params, &block)
           @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}")
           params[:headers]['Date'] = Time.now.utc.strftime("%a, %d %b %Y %H:%M:%S +0000")
           params[:headers]['Authorization'] = "AWS #{@aws_access_key_id}:#{signature(params)}"
 
-          response = @connection.request(params)
+          response = @connection.request(params, &block)
 
           response
         end
@@ -189,7 +198,7 @@ DATA
             canonical_resource << "#{CGI.escape(subdomain).downcase}/"
           end
           canonical_resource << "#{params[:path]}"
-          if ['acl', 'location', 'logging', 'requestPayment', 'torrent'].include?(params[:query])
+          if params[:query]
             canonical_resource << "?#{params[:query]}"
           end
           string_to_sign << "#{canonical_resource}"
