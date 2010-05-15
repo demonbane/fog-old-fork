@@ -46,6 +46,14 @@ module Fog
         sprintf("%0.10f", rand / 100).to_f
       end
 
+      def self.dns_name_for(ip_address)
+        "ec2-#{ip_address.gsub('.','-')}.compute-1.amazonaws.com"
+      end
+
+      def self.private_dns_name_for(ip_address)
+        "ip-#{ip_address.gsub('.','-')}.ec2.internal"
+      end
+
       def self.console_output
         'This is my console. There are many like it, but this one is mine. My console is my best friend. It is my life. I must master it as I master my life. My console, without me, is useless. Without my console, I am useless.'
       end
@@ -164,17 +172,13 @@ module Fog
       end
 
       def self.numbers(length)
-        random_selection(
-          '0123456789',
-          length
-        )
+        max = ('9' * length).to_i
+        rand(max).to_s
       end
 
       def self.hex(length)
-        random_selection(
-          '0123456789abcdef',
-          length
-        )
+        max = ('f' * length).to_i(16)
+        rand(max).to_s(16)
       end
 
       def self.base64(length)
