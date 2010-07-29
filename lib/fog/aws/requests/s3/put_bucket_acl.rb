@@ -62,7 +62,7 @@ DATA
             :headers  => {},
             :host     => "#{bucket_name}.#{@host}",
             :method   => 'PUT',
-            :query    => 'acl'
+            :query    => {'acl' => nil}
           })
         end
 
@@ -71,7 +71,7 @@ DATA
       class Mock
 
         def put_bucket_acl(bucket_name, acl)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

@@ -5,13 +5,7 @@ module Fog
   module AWS
     module EC2
 
-      class Mock
-        def key_pairs
-          Fog::AWS::EC2::KeyPairs.new(:connection => self)
-        end
-      end
-
-      class Real
+      module Collections
         def key_pairs
           Fog::AWS::EC2::KeyPairs.new(:connection => self)
         end
@@ -38,7 +32,7 @@ module Fog
           if key_name
             all(key_name).first
           end
-        rescue Excon::Errors::BadRequest
+        rescue Fog::Errors::NotFound
           nil
         end
 

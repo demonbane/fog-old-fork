@@ -22,7 +22,7 @@ module Fog
       class Mock
 
         def delete_container(name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

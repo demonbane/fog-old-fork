@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_key_pairs'
+
         # Describe all or specified key pairs
         #
         # ==== Parameters
@@ -18,8 +20,9 @@ module Fog
         def describe_key_pairs(key_name = [])
           params = AWS.indexed_param('KeyName', key_name)
           request({
-            'Action'  => 'DescribeKeyPairs',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeKeyPairs.new
+            'Action'    => 'DescribeKeyPairs',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeKeyPairs.new
           }.merge!(params))
         end
 
@@ -43,11 +46,10 @@ module Fog
                 key.reject {|key,value| !['keyFingerprint', 'keyName'].include?(key)}
               end
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The key pair #{key_name.inspect} does not exist")
           end
-          response
         end
 
       end

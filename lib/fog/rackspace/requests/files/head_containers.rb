@@ -15,7 +15,7 @@ module Fog
             :expects  => 204,
             :method   => 'HEAD',
             :path     => '',
-            :query    => 'format=json'
+            :query    => {'format' => 'json'}
           )
           response
         end
@@ -25,7 +25,7 @@ module Fog
       class Mock
 
         def head_containers
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

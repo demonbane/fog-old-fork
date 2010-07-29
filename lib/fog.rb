@@ -4,8 +4,6 @@ require 'cgi'
 require 'digest/md5'
 require 'excon'
 require 'formatador'
-require 'hmac-sha1'
-require 'hmac-sha2'
 require 'json'
 require 'mime/types'
 require 'net/ssh'
@@ -18,15 +16,23 @@ $LOAD_PATH.unshift __DIR__ unless
   $LOAD_PATH.include?(__DIR__) ||
   $LOAD_PATH.include?(File.expand_path(__DIR__))
 
+require 'fog/attributes'
 require 'fog/collection'
 require 'fog/connection'
 require 'fog/deprecation'
+require 'fog/errors'
+require 'fog/hmac'
 require 'fog/model'
 require 'fog/parser'
+require 'fog/service'
 require 'fog/ssh'
 
 require 'fog/aws'
+require 'fog/bluebox'
+require 'fog/go_grid'
+require 'fog/linode'
 require 'fog/local'
+require 'fog/new_servers'
 require 'fog/rackspace'
 require 'fog/slicehost'
 require 'fog/terremark'
@@ -35,7 +41,7 @@ require 'fog/vcloud'
 module Fog
 
   unless const_defined?(:VERSION)
-    VERSION = '0.0.99'
+    VERSION = '0.2.21'
   end
 
   module Mock
@@ -48,9 +54,12 @@ module Fog
       raise ArgumentError, "delay must be non-negative" unless new_delay >= 0
       @delay = new_delay
     end
-  end
 
-  class MockNotImplemented < StandardError; end
+    def self.not_implemented
+      raise Fog::Errors::MockNotImplemented.new("Contributions welcome!")
+    end
+
+  end
 
   def self.mock!
     @mocking = true
@@ -60,11 +69,11 @@ module Fog
     !!@mocking
   end
 
-  def self.wait_for(timeout = 600, &block)
+  def self.wait_for(timeout=600, interval=1, &block)
     duration = 0
     start = Time.now
     until yield || duration > timeout
-      sleep(1)
+      sleep(interval)
       duration = Time.now - start
     end
     if duration > timeout

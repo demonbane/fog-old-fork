@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/create_key_pair'
+
         # Create a new key pair
         #
         # ==== Parameters
@@ -40,11 +42,10 @@ module Fog
             response.body = {
               'requestId' => Fog::AWS::Mock.request_id
             }.merge!(data)
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::Error.new("InvalidKeyPair.Duplicate => The keypair '#{key_name}' already exists.")
           end
-          response
         end
 
       end

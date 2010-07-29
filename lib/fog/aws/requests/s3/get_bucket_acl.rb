@@ -3,6 +3,8 @@ module Fog
     module S3
       class Real
 
+        require 'fog/aws/parsers/s3/access_control_list'
+
         # Get access control list for an S3 bucket
         #
         # ==== Parameters
@@ -35,7 +37,7 @@ module Fog
             :idempotent => true,
             :method     => 'GET',
             :parser     => Fog::Parsers::AWS::S3::AccessControlList.new,
-            :query      => 'acl'
+            :query      => {'acl' => nil}
           })
         end
 
@@ -44,7 +46,7 @@ module Fog
       class Mock
 
         def get_bucket_acl(bucket_name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

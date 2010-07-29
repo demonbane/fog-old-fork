@@ -3,6 +3,8 @@ module Fog
     module S3
       class Real
 
+        require 'fog/aws/parsers/s3/access_control_list'
+
         # Get access control list for an S3 object
         #
         # ==== Parameters
@@ -34,9 +36,9 @@ module Fog
           unless object_name
             raise ArgumentError.new('object_name is required')
           end
-          query = 'acl'
+          query = {'acl' => nil}
           if version_id = options.delete('versionId')
-            query << "&#{CGI.escape(version_id)}"
+            query['versionId'] = version_id
           end
           request({
             :expects    => 200,
@@ -55,7 +57,7 @@ module Fog
       class Mock
 
         def get_object_acl(bucket_name, object_name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

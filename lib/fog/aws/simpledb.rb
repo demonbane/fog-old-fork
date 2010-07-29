@@ -1,38 +1,23 @@
 module Fog
   module AWS
     module SimpleDB
+      extend Fog::Service
 
-      def self.new(options={})
+      requires :aws_access_key_id, :aws_secret_access_key
 
-        unless @required
-          require 'fog/aws/parsers/simpledb/domain_metadata'
-          require 'fog/aws/parsers/simpledb/get_attributes'
-          require 'fog/aws/parsers/simpledb/list_domains'
-          require 'fog/aws/parsers/simpledb/select'
-          require 'fog/aws/requests/simpledb/batch_put_attributes'
-          require 'fog/aws/requests/simpledb/create_domain'
-          require 'fog/aws/requests/simpledb/delete_attributes'
-          require 'fog/aws/requests/simpledb/delete_domain'
-          require 'fog/aws/requests/simpledb/domain_metadata'
-          require 'fog/aws/requests/simpledb/get_attributes'
-          require 'fog/aws/requests/simpledb/list_domains'
-          require 'fog/aws/requests/simpledb/put_attributes'
-          require 'fog/aws/requests/simpledb/select'
-          @required = true
-        end
-
-        if Fog.mocking?
-          Fog::AWS::SimpleDB::Mock.new(options)
-        else
-          Fog::AWS::SimpleDB::Real.new(options)
-        end
-      end
-
-      def self.reset_data(keys=Mock.data.keys)
-        Mock.reset_data(keys)
-      end
+      request_path 'fog/aws/requests/simpledb'
+      request 'batch_put_attributes'
+      request 'create_domain'
+      request 'delete_attributes'
+      request 'delete_domain'
+      request 'domain_metadata'
+      request 'get_attributes'
+      request 'list_domains'
+      request 'put_attributes'
+      request 'select'
 
       class Mock
+        include Collections
 
         def self.data
           @data ||= Hash.new do |hash, key|
@@ -56,6 +41,7 @@ module Fog
       end
 
       class Real
+        include Collections
 
         # Initialize connection to SimpleDB
         #
@@ -77,18 +63,27 @@ module Fog
         def initialize(options={})
           @aws_access_key_id      = options[:aws_access_key_id]
           @aws_secret_access_key  = options[:aws_secret_access_key]
-          @hmac       = HMAC::SHA256.new(@aws_secret_access_key)
+          @hmac       = Fog::HMAC.new('sha256', @aws_secret_access_key)
           @host       = options[:host]      || 'sdb.amazonaws.com'
           @nil_string = options[:nil_string]|| 'nil'
           @port       = options[:port]      || 443
           @scheme     = options[:scheme]    || 'https'
+          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}", options[:persistent])
         end
 
         private
 
-        def encode_attributes(attributes, replace_attributes = [])
+        def encode_attributes(attributes, replace_attributes = [], expected_attributes = {})
           encoded_attributes = {}
           if attributes
+
+            expected_attributes.keys.each_with_index do |exkey, index|
+              for value in Array(expected_attributes[exkey])
+                encoded_attributes["Expected.#{index}.Name"] = exkey.to_s
+                encoded_attributes["Expected.#{index}.Value"] = sdb_encode(value)
+              end
+            end
+
             index = 0
             for key in attributes.keys
               for value in Array(attributes[key])
@@ -131,8 +126,11 @@ module Fog
           encoded_attributes
         end
 
+        def reload
+          @connection.reset
+        end
+
         def request(params)
-          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}")
           idempotent = params.delete(:idempotent)
           parser = params.delete(:parser)
 
@@ -142,7 +140,7 @@ module Fog
               :aws_access_key_id  => @aws_access_key_id,
               :hmac               => @hmac,
               :host               => @host,
-              :version            => '2007-11-07'
+              :version            => '2009-04-15'
             }
           )
 

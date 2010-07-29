@@ -3,6 +3,8 @@ module Fog
     module S3
       class Real
 
+        require 'fog/aws/parsers/s3/get_request_payment'
+
         # Get configured payer for an S3 bucket
         #
         # ==== Parameters
@@ -20,7 +22,7 @@ module Fog
             :idempotent => true,
             :method   => 'GET',
             :parser   => Fog::Parsers::AWS::S3::GetRequestPayment.new,
-            :query    => 'requestPayment'
+            :query    => {'requestPayment' => nil}
           })
         end
 

@@ -3,6 +3,8 @@ module Fog
     module SimpleDB
       class Real
 
+        require 'fog/aws/parsers/simpledb/select'
+
         # Select item data from SimpleDB
         #
         # ==== Parameters
@@ -31,7 +33,7 @@ module Fog
       class Mock
 
         def select(select_expression, next_token = nil)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

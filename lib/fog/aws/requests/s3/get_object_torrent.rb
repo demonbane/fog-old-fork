@@ -37,7 +37,7 @@ module Fog
             :idempotent => true,
             :method     => 'GET',
             :path       => CGI.escape(object_name),
-            :query      => 'torrent'
+            :query      => {'torrent' => nil}
           })
         end
 
@@ -46,7 +46,7 @@ module Fog
       class Mock
 
         def get_object_object(bucket_name, object_name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

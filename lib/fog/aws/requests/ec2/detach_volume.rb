@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/detach_volume'
+
         # Detach an Amazon EBS volume from a running instance
         #
         # ==== Parameters
@@ -25,6 +27,7 @@ module Fog
           request({
             'Action'    => 'DetachVolume',
             'VolumeId'  => volume_id,
+            :idempotent => true,
             :parser     => Fog::Parsers::AWS::EC2::DetachVolume.new
           }.merge!(options))
         end
@@ -43,11 +46,10 @@ module Fog
             response.body = {
               'requestId' => Fog::AWS::Mock.request_id
             }.merge!(data)
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The volume '#{volume_id}' does not exist.")
           end
-          response
         end
 
       end

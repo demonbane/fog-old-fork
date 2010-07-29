@@ -5,15 +5,7 @@ module Fog
   module AWS
     module EC2
 
-      class Mock
-        def volumes(attributes = {})
-          Fog::AWS::EC2::Volumes.new({
-            :connection => self
-          }.merge!(attributes))
-        end
-      end
-
-      class Real
+      module Collections
         def volumes(attributes = {})
           Fog::AWS::EC2::Volumes.new({
             :connection => self
@@ -47,7 +39,7 @@ module Fog
           if volume_id
             all(volume_id).first
           end
-        rescue Excon::Errors::BadRequest
+        rescue Fog::Errors::NotFound
           nil
         end
 

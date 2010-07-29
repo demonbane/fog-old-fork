@@ -3,6 +3,8 @@ module Fog
     module ELB
       class Real
 
+        require 'fog/aws/parsers/elb/create_load_balancer'
+
         # Create a new Elastic Load Balancer
         #
         # ==== Parameters
@@ -31,9 +33,9 @@ module Fog
             listener_instance_port.push(listener['InstancePort'])
           end
 
-          params.merge!(ELB.indexed_param('Listeners.member.%.Protocol', listener_protocol, 1))
-          params.merge!(ELB.indexed_param('Listeners.member.%.LoadBalancerPort', listener_lb_port, 1))
-          params.merge!(ELB.indexed_param('Listeners.member.%.InstancePort', listener_instance_port, 1))
+          params.merge!(AWS.indexed_param('Listeners.member.%.Protocol', listener_protocol, 1))
+          params.merge!(AWS.indexed_param('Listeners.member.%.LoadBalancerPort', listener_lb_port, 1))
+          params.merge!(AWS.indexed_param('Listeners.member.%.InstancePort', listener_instance_port, 1))
 
           request({
             'Action'           => 'CreateLoadBalancer',
@@ -47,7 +49,7 @@ module Fog
       class Mock
 
         def create_load_balancer(availability_zones, lb_name, listeners)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

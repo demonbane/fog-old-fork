@@ -5,13 +5,7 @@ module Fog
   module Rackspace
     module Servers
 
-      class Real
-        def flavors
-          Fog::Rackspace::Servers::Flavors.new(:connection => self)
-        end
-      end
-
-      class Mock
+      module Collections
         def flavors
           Fog::Rackspace::Servers::Flavors.new(:connection => self)
         end
@@ -29,7 +23,7 @@ module Fog
         def get(flavor_id)
           data = connection.get_flavor_details(flavor_id).body['flavor']
           new(data)
-        rescue Excon::Errors::NotFound
+        rescue Fog::Rackspace::Servers::NotFound
           nil
         end
 

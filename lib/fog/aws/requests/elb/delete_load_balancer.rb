@@ -3,6 +3,8 @@ module Fog
     module ELB
       class Real
 
+        require 'fog/aws/parsers/elb/delete_load_balancer'
+
         # Delete an existing Elastic Load Balancer
         #
         # Note that this API call, as defined by Amazon, is idempotent.
@@ -30,7 +32,7 @@ module Fog
       class Mock
 
         def delete_load_balancer(lb_name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

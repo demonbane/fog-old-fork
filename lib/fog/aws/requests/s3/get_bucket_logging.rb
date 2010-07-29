@@ -3,6 +3,8 @@ module Fog
     module S3
       class Real
 
+        require 'fog/aws/parsers/s3/get_bucket_logging'
+
         # Get logging status for an S3 bucket
         #
         # ==== Parameters
@@ -35,7 +37,7 @@ module Fog
             :idempotent => true,
             :method     => 'GET',
             :parser     => Fog::Parsers::AWS::S3::GetBucketLogging.new,
-            :query      => 'logging'
+            :query      => {'logging' => nil}
           })
         end
 
@@ -44,7 +46,7 @@ module Fog
       class Mock
 
         def get_bucket_logging(bucket_name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_images'
+
         # Describe all or specified images.
         #
         # ==== Params
@@ -18,6 +20,7 @@ module Fog
         #     * 'requestId'<~String> - Id of request
         #     * 'imagesSet'<~Array>:
         #       * 'architecture'<~String> - Architecture of the image
+        #       * 'blockDeviceMapping'<~Array> - An array of mapped block devices
         #       * 'imageId'<~String> - Id of the image
         #       * 'imageLocation'<~String> - Location of the image
         #       * 'imageOwnerId'<~String> - Id of the owner of the image
@@ -28,13 +31,16 @@ module Fog
         #       * 'platform'<~String> - Operating platform of the image
         #       * 'productCodes'<~Array> - Product codes for the image
         #       * 'ramdiskId'<~String> - Ramdisk id associated with image, if any
+        #       * 'rootDeviceName'<~String> - Root device name, e.g. /dev/sda1
+        #       * 'rootDeviceType'<~String> - Root device type, ebs or instance-store
         def describe_images(options = {})
           if image_id = options.delete('ImageId')
             options.merge!(AWS.indexed_param('ImageId', image_id))
           end
           request({
-            'Action'  => 'DescribeImages',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeImages.new
+            'Action'    => 'DescribeImages',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeImages.new
           }.merge!(options))
         end
 

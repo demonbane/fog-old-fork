@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_instances'
+
         # Describe all or specified instances
         #
         # ==== Parameters
@@ -51,8 +53,9 @@ module Fog
         def describe_instances(instance_id = [])
           params = AWS.indexed_param('InstanceId', instance_id)
           request({
-            'Action'  => 'DescribeInstances',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeInstances.new
+            'Action'    => 'DescribeInstances',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeInstances.new
           }.merge!(params))
         end
 
@@ -90,7 +93,7 @@ module Fog
                   @data[:deleted_at].delete(instance['instanceId'])
                   @data[:instances].delete(instance['instanceId'])
                 elsif Time.now - @data[:deleted_at][instance['instanceId']] > Fog::Mock.delay
-                  instance['instanceState'] = { 'code' => 16, 'name' => 'terminating' }
+                  instance['instanceState'] = { 'code' => 48, 'name' => 'terminating' }
                 end
               when 'terminating'
                 if Time.now - @data[:deleted_at][instance['instanceId']] > Fog::Mock.delay
@@ -106,7 +109,7 @@ module Fog
                   'ownerId'       => instance['ownerId'],
                   'reservationId' => instance['reservationId']
                 }
-                reservation_set[instance['reservationId']]['instancesSet'] << instance.reject{|key,value| !['amiLaunchIndex', 'blockDeviceMapping', 'dnsName', 'imageId', 'instanceId', 'instanceState', 'instanceType', 'ipAddress', 'kernelId', 'keyName', 'launchTime', 'monitoring', 'placement', 'privateDnsName', 'privateIpAddress', 'productCodes', 'ramdiskId', 'reason', 'rootDeviceType'].include?(key)}
+                reservation_set[instance['reservationId']]['instancesSet'] << instance.reject{|key,value| !['amiLaunchIndex', 'architecture', 'blockDeviceMapping', 'dnsName', 'imageId', 'instanceId', 'instanceState', 'instanceType', 'ipAddress', 'kernelId', 'keyName', 'launchTime', 'monitoring', 'placement', 'privateDnsName', 'privateIpAddress', 'productCodes', 'ramdiskId', 'reason', 'rootDeviceType'].include?(key)}
               end
             end
 
@@ -114,11 +117,10 @@ module Fog
               'requestId'       => Fog::AWS::Mock.request_id,
               'reservationSet' => reservation_set.values
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The instance ID #{instance_id.inspect} does not exist")
           end
-          response
         end
 
       end

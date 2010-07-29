@@ -23,7 +23,7 @@ module Fog
       class Mock
 
         def list_flavors
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

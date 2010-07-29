@@ -5,13 +5,7 @@ module Fog
   module AWS
     module EC2
 
-      class Mock
-        def servers
-          Fog::AWS::EC2::Servers.new(:connection => self)
-        end
-      end
-
-      class Real
+      module Collections
         def servers
           Fog::AWS::EC2::Servers.new(:connection => self)
         end
@@ -44,7 +38,7 @@ module Fog
           if server_id
             all(server_id).first
           end
-        rescue Excon::Errors::BadRequest
+        rescue Fog::Errors::NotFound
           nil
         end
 

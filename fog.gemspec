@@ -7,8 +7,8 @@ Gem::Specification.new do |s|
   ## If your rubyforge_project name is different, then edit it and comment out
   ## the sub! line in the Rakefile
   s.name              = 'fog'
-  s.version           = '0.0.99'
-  s.date              = '2010-05-14'
+  s.version           = '0.2.21'
+  s.date              = '2010-07-29'
   s.rubyforge_project = 'fog'
 
   ## Make sure your summary is short. The description may be as long
@@ -42,18 +42,19 @@ Gem::Specification.new do |s|
 
   ## List your runtime dependencies here. Runtime dependencies are those
   ## that are needed for an end user to actually USE your code.
-  s.add_dependency('excon', '>=0.0.24')
-  s.add_dependency('formatador', '>=0.0.10')
+  s.add_dependency('builder')
+  s.add_dependency('excon', '>=0.2.0')
+  s.add_dependency('formatador', '>=0.0.15')
   s.add_dependency('json')
   s.add_dependency('mime-types')
   s.add_dependency('net-ssh')
-  s.add_dependency('nokogiri')
+  s.add_dependency('nokogiri', '>=1.4.3.1')
   s.add_dependency('ruby-hmac')
 
   ## List your development dependencies here. Development dependencies are
   ## those that are only needed during development
   s.add_development_dependency('rspec')
-  s.add_development_dependency('shindo')
+  s.add_development_dependency('shindo', '0.1.6')
 
   ## Leave this section as-is. It will be automatically generated from the
   ## contents of your Git repository via the gemspec task. DO NOT REMOVE
@@ -68,8 +69,10 @@ Gem::Specification.new do |s|
     benchs/params.rb
     benchs/parse_vs_push.rb
     bin/fog
+    examples/bluebox_create.rb
     fog.gemspec
     lib/fog.rb
+    lib/fog/attributes.rb
     lib/fog/aws.rb
     lib/fog/aws/bin.rb
     lib/fog/aws/ec2.rb
@@ -97,9 +100,11 @@ Gem::Specification.new do |s|
     lib/fog/aws/parsers/ec2/allocate_address.rb
     lib/fog/aws/parsers/ec2/attach_volume.rb
     lib/fog/aws/parsers/ec2/basic.rb
+    lib/fog/aws/parsers/ec2/create_image.rb
     lib/fog/aws/parsers/ec2/create_key_pair.rb
     lib/fog/aws/parsers/ec2/create_snapshot.rb
     lib/fog/aws/parsers/ec2/create_volume.rb
+    lib/fog/aws/parsers/ec2/deregister_image.rb
     lib/fog/aws/parsers/ec2/describe_addresses.rb
     lib/fog/aws/parsers/ec2/describe_availability_zones.rb
     lib/fog/aws/parsers/ec2/describe_images.rb
@@ -113,6 +118,7 @@ Gem::Specification.new do |s|
     lib/fog/aws/parsers/ec2/detach_volume.rb
     lib/fog/aws/parsers/ec2/get_console_output.rb
     lib/fog/aws/parsers/ec2/run_instances.rb
+    lib/fog/aws/parsers/ec2/start_stop_instances.rb
     lib/fog/aws/parsers/ec2/terminate_instances.rb
     lib/fog/aws/parsers/elb/create_load_balancer.rb
     lib/fog/aws/parsers/elb/delete_load_balancer.rb
@@ -140,6 +146,7 @@ Gem::Specification.new do |s|
     lib/fog/aws/requests/ec2/associate_address.rb
     lib/fog/aws/requests/ec2/attach_volume.rb
     lib/fog/aws/requests/ec2/authorize_security_group_ingress.rb
+    lib/fog/aws/requests/ec2/create_image.rb
     lib/fog/aws/requests/ec2/create_key_pair.rb
     lib/fog/aws/requests/ec2/create_security_group.rb
     lib/fog/aws/requests/ec2/create_snapshot.rb
@@ -148,6 +155,7 @@ Gem::Specification.new do |s|
     lib/fog/aws/requests/ec2/delete_security_group.rb
     lib/fog/aws/requests/ec2/delete_snapshot.rb
     lib/fog/aws/requests/ec2/delete_volume.rb
+    lib/fog/aws/requests/ec2/deregister_image.rb
     lib/fog/aws/requests/ec2/describe_addresses.rb
     lib/fog/aws/requests/ec2/describe_availability_zones.rb
     lib/fog/aws/requests/ec2/describe_images.rb
@@ -166,6 +174,8 @@ Gem::Specification.new do |s|
     lib/fog/aws/requests/ec2/release_address.rb
     lib/fog/aws/requests/ec2/revoke_security_group_ingress.rb
     lib/fog/aws/requests/ec2/run_instances.rb
+    lib/fog/aws/requests/ec2/start_instances.rb
+    lib/fog/aws/requests/ec2/stop_instances.rb
     lib/fog/aws/requests/ec2/terminate_instances.rb
     lib/fog/aws/requests/elb/create_load_balancer.rb
     lib/fog/aws/requests/elb/delete_load_balancer.rb
@@ -196,6 +206,7 @@ Gem::Specification.new do |s|
     lib/fog/aws/requests/s3/put_bucket_logging.rb
     lib/fog/aws/requests/s3/put_bucket_versioning.rb
     lib/fog/aws/requests/s3/put_object.rb
+    lib/fog/aws/requests/s3/put_object_url.rb
     lib/fog/aws/requests/s3/put_request_payment.rb
     lib/fog/aws/requests/simpledb/batch_put_attributes.rb
     lib/fog/aws/requests/simpledb/create_domain.rb
@@ -209,10 +220,51 @@ Gem::Specification.new do |s|
     lib/fog/aws/s3.rb
     lib/fog/aws/simpledb.rb
     lib/fog/bin.rb
+    lib/fog/bluebox.rb
+    lib/fog/bluebox/bin.rb
+    lib/fog/bluebox/models/flavor.rb
+    lib/fog/bluebox/models/flavors.rb
+    lib/fog/bluebox/models/image.rb
+    lib/fog/bluebox/models/images.rb
+    lib/fog/bluebox/models/server.rb
+    lib/fog/bluebox/models/servers.rb
+    lib/fog/bluebox/requests/create_block.rb
+    lib/fog/bluebox/requests/destroy_block.rb
+    lib/fog/bluebox/requests/get_block.rb
+    lib/fog/bluebox/requests/get_blocks.rb
+    lib/fog/bluebox/requests/get_product.rb
+    lib/fog/bluebox/requests/get_products.rb
+    lib/fog/bluebox/requests/get_template.rb
+    lib/fog/bluebox/requests/get_templates.rb
+    lib/fog/bluebox/requests/reboot_block.rb
     lib/fog/collection.rb
     lib/fog/connection.rb
     lib/fog/credentials.rb
     lib/fog/deprecation.rb
+    lib/fog/errors.rb
+    lib/fog/go_grid.rb
+    lib/fog/go_grid/bin.rb
+    lib/fog/go_grid/requests/common_lookup_list.rb
+    lib/fog/go_grid/requests/grid_image_list.rb
+    lib/fog/go_grid/requests/grid_ip_list.rb
+    lib/fog/go_grid/requests/grid_loadbalancer_list.rb
+    lib/fog/go_grid/requests/grid_server_add.rb
+    lib/fog/go_grid/requests/grid_server_delete.rb
+    lib/fog/go_grid/requests/grid_server_get.rb
+    lib/fog/go_grid/requests/grid_server_list.rb
+    lib/fog/go_grid/requests/grid_server_power.rb
+    lib/fog/hmac.rb
+    lib/fog/linode.rb
+    lib/fog/linode/bin.rb
+    lib/fog/linode/requests/avail_datacenters.rb
+    lib/fog/linode/requests/avail_distributions.rb
+    lib/fog/linode/requests/avail_kernels.rb
+    lib/fog/linode/requests/avail_linodeplans.rb
+    lib/fog/linode/requests/avail_stackscripts.rb
+    lib/fog/linode/requests/linode_create.rb
+    lib/fog/linode/requests/linode_delete.rb
+    lib/fog/linode/requests/linode_list.rb
+    lib/fog/linode/requests/linode_reboot.rb
     lib/fog/local.rb
     lib/fog/local/bin.rb
     lib/fog/local/models/directories.rb
@@ -220,6 +272,15 @@ Gem::Specification.new do |s|
     lib/fog/local/models/file.rb
     lib/fog/local/models/files.rb
     lib/fog/model.rb
+    lib/fog/new_servers.rb
+    lib/fog/new_servers/bin.rb
+    lib/fog/new_servers/requests/add_server.rb
+    lib/fog/new_servers/requests/cancel_server.rb
+    lib/fog/new_servers/requests/get_server.rb
+    lib/fog/new_servers/requests/list_images.rb
+    lib/fog/new_servers/requests/list_plans.rb
+    lib/fog/new_servers/requests/list_servers.rb
+    lib/fog/new_servers/requests/reboot_server.rb
     lib/fog/parser.rb
     lib/fog/rackspace.rb
     lib/fog/rackspace/bin.rb
@@ -263,6 +324,7 @@ Gem::Specification.new do |s|
     lib/fog/rackspace/requests/servers/reboot_server.rb
     lib/fog/rackspace/requests/servers/update_server.rb
     lib/fog/rackspace/servers.rb
+    lib/fog/service.rb
     lib/fog/slicehost.rb
     lib/fog/slicehost/bin.rb
     lib/fog/slicehost/models/flavor.rb
@@ -354,22 +416,74 @@ Gem::Specification.new do |s|
     lib/fog/terremark/vcloud.rb
     lib/fog/vcloud.rb
     lib/fog/vcloud/bin.rb
-    lib/fog/vcloud/parser.rb
-    lib/fog/vcloud/parsers/get_organization.rb
-    lib/fog/vcloud/parsers/get_vdc.rb
-    lib/fog/vcloud/parsers/get_versions.rb
-    lib/fog/vcloud/parsers/login.rb
+    lib/fog/vcloud/collection.rb
+    lib/fog/vcloud/extension.rb
+    lib/fog/vcloud/generators.rb
+    lib/fog/vcloud/model.rb
+    lib/fog/vcloud/models/vdc.rb
+    lib/fog/vcloud/models/vdcs.rb
+    lib/fog/vcloud/requests/get_network.rb
     lib/fog/vcloud/requests/get_organization.rb
     lib/fog/vcloud/requests/get_vdc.rb
     lib/fog/vcloud/requests/get_versions.rb
     lib/fog/vcloud/requests/login.rb
-    lib/fog/vcloud/terremark/all.rb
     lib/fog/vcloud/terremark/ecloud.rb
-    lib/fog/vcloud/terremark/ecloud/parsers/get_vdc.rb
+    lib/fog/vcloud/terremark/ecloud/models/catalog.rb
+    lib/fog/vcloud/terremark/ecloud/models/catalog_item.rb
+    lib/fog/vcloud/terremark/ecloud/models/firewall_acl.rb
+    lib/fog/vcloud/terremark/ecloud/models/firewall_acls.rb
+    lib/fog/vcloud/terremark/ecloud/models/internet_service.rb
+    lib/fog/vcloud/terremark/ecloud/models/internet_services.rb
+    lib/fog/vcloud/terremark/ecloud/models/ip.rb
+    lib/fog/vcloud/terremark/ecloud/models/ips.rb
+    lib/fog/vcloud/terremark/ecloud/models/network.rb
+    lib/fog/vcloud/terremark/ecloud/models/networks.rb
+    lib/fog/vcloud/terremark/ecloud/models/node.rb
+    lib/fog/vcloud/terremark/ecloud/models/nodes.rb
+    lib/fog/vcloud/terremark/ecloud/models/public_ip.rb
+    lib/fog/vcloud/terremark/ecloud/models/public_ips.rb
+    lib/fog/vcloud/terremark/ecloud/models/server.rb
+    lib/fog/vcloud/terremark/ecloud/models/servers.rb
+    lib/fog/vcloud/terremark/ecloud/models/task.rb
+    lib/fog/vcloud/terremark/ecloud/models/tasks.rb
+    lib/fog/vcloud/terremark/ecloud/models/vdc.rb
+    lib/fog/vcloud/terremark/ecloud/models/vdcs.rb
+    lib/fog/vcloud/terremark/ecloud/requests/add_internet_service.rb
+    lib/fog/vcloud/terremark/ecloud/requests/add_node.rb
+    lib/fog/vcloud/terremark/ecloud/requests/clone_vapp.rb
+    lib/fog/vcloud/terremark/ecloud/requests/configure_internet_service.rb
+    lib/fog/vcloud/terremark/ecloud/requests/configure_network.rb
+    lib/fog/vcloud/terremark/ecloud/requests/configure_network_ip.rb
+    lib/fog/vcloud/terremark/ecloud/requests/configure_node.rb
+    lib/fog/vcloud/terremark/ecloud/requests/configure_vapp.rb
+    lib/fog/vcloud/terremark/ecloud/requests/delete_internet_service.rb
+    lib/fog/vcloud/terremark/ecloud/requests/delete_node.rb
+    lib/fog/vcloud/terremark/ecloud/requests/delete_vapp.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_catalog.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_catalog_item.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_customization_options.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_firewall_acl.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_firewall_acls.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_internet_services.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_network.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_network_extensions.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_network_ip.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_network_ips.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_node.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_nodes.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_public_ip.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_public_ips.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_task.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_task_list.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_vapp.rb
+    lib/fog/vcloud/terremark/ecloud/requests/get_vapp_template.rb
     lib/fog/vcloud/terremark/ecloud/requests/get_vdc.rb
-    lib/fog/vcloud/terremark/ecloud/requests/login.rb
+    lib/fog/vcloud/terremark/ecloud/requests/instantiate_vapp_template.rb
+    lib/fog/vcloud/terremark/ecloud/requests/power_off.rb
+    lib/fog/vcloud/terremark/ecloud/requests/power_on.rb
+    lib/fog/vcloud/terremark/ecloud/requests/power_reset.rb
+    lib/fog/vcloud/terremark/ecloud/requests/power_shutdown.rb
     lib/fog/vcloud/terremark/vcloud.rb
-    lib/fog/vcloud/terremark/vcloud/parsers/get_vdc.rb
     lib/fog/vcloud/terremark/vcloud/requests/get_vdc.rb
     spec/aws/models/ec2/address_spec.rb
     spec/aws/models/ec2/addresses_spec.rb
@@ -388,22 +502,7 @@ Gem::Specification.new do |s|
     spec/aws/models/s3/directory_spec.rb
     spec/aws/models/s3/file_spec.rb
     spec/aws/models/s3/files_spec.rb
-    spec/aws/requests/ec2/authorize_security_group_ingress_spec.rb
-    spec/aws/requests/ec2/create_key_pair_spec.rb
-    spec/aws/requests/ec2/create_security_group_spec.rb
-    spec/aws/requests/ec2/delete_key_pair_spec.rb
-    spec/aws/requests/ec2/delete_security_group_spec.rb
-    spec/aws/requests/ec2/describe_availability_zones_spec.rb
     spec/aws/requests/ec2/describe_images_spec.rb
-    spec/aws/requests/ec2/describe_instances_spec.rb
-    spec/aws/requests/ec2/describe_key_pairs_spec.rb
-    spec/aws/requests/ec2/describe_regions_spec.rb
-    spec/aws/requests/ec2/describe_security_groups_spec.rb
-    spec/aws/requests/ec2/get_console_output_spec.rb
-    spec/aws/requests/ec2/reboot_instances_spec.rb
-    spec/aws/requests/ec2/revoke_security_group_ingress_spec.rb
-    spec/aws/requests/ec2/run_instances_spec.rb
-    spec/aws/requests/ec2/terminate_instances_spec.rb
     spec/aws/requests/s3/copy_object_spec.rb
     spec/aws/requests/s3/delete_bucket_spec.rb
     spec/aws/requests/s3/delete_object_spec.rb
@@ -425,6 +524,9 @@ Gem::Specification.new do |s|
     spec/aws/requests/simpledb/list_domains_spec.rb
     spec/aws/requests/simpledb/put_attributes_spec.rb
     spec/aws/requests/simpledb/select_spec.rb
+    spec/bluebox/models/flavors_spec.rb
+    spec/bluebox/models/server_spec.rb
+    spec/bluebox/models/servers_spec.rb
     spec/compact_progress_bar_formatter.rb
     spec/lorem.txt
     spec/rackspace/models/servers/flavors_spec.rb
@@ -448,51 +550,75 @@ Gem::Specification.new do |s|
     spec/slicehost/models/servers_spec.rb
     spec/spec_helper.rb
     spec/vcloud/bin_spec.rb
+    spec/vcloud/models/vdc_spec.rb
+    spec/vcloud/models/vdcs_spec.rb
+    spec/vcloud/requests/get_network_spec.rb
     spec/vcloud/requests/get_organization_spec.rb
     spec/vcloud/requests/get_vdc_spec.rb
     spec/vcloud/requests/get_versions_spec.rb
     spec/vcloud/requests/login_spec.rb
     spec/vcloud/spec_helper.rb
+    spec/vcloud/terremark/ecloud/models/internet_service_spec.rb
+    spec/vcloud/terremark/ecloud/models/internet_services_spec.rb
+    spec/vcloud/terremark/ecloud/models/ip_spec.rb
+    spec/vcloud/terremark/ecloud/models/ips_spec.rb
+    spec/vcloud/terremark/ecloud/models/network_spec.rb
+    spec/vcloud/terremark/ecloud/models/networks_spec.rb
+    spec/vcloud/terremark/ecloud/models/node_spec.rb
+    spec/vcloud/terremark/ecloud/models/nodes_spec.rb
+    spec/vcloud/terremark/ecloud/models/public_ip_spec.rb
+    spec/vcloud/terremark/ecloud/models/public_ips_spec.rb
+    spec/vcloud/terremark/ecloud/models/vdc_spec.rb
+    spec/vcloud/terremark/ecloud/models/vdcs_spec.rb
+    spec/vcloud/terremark/ecloud/requests/add_internet_service_spec.rb
+    spec/vcloud/terremark/ecloud/requests/add_node_spec.rb
+    spec/vcloud/terremark/ecloud/requests/configure_internet_service_spec.rb
+    spec/vcloud/terremark/ecloud/requests/configure_node_spec.rb
+    spec/vcloud/terremark/ecloud/requests/delete_internet_service_spec.rb
+    spec/vcloud/terremark/ecloud/requests/delete_node_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_internet_services_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_network_ip_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_network_ips_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_network_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_node_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_nodes_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_public_ip_spec.rb
+    spec/vcloud/terremark/ecloud/requests/get_public_ips_spec.rb
     spec/vcloud/terremark/ecloud/requests/get_vdc_spec.rb
     spec/vcloud/terremark/ecloud/requests/login_spec.rb
-    spec/vcloud/terremark/vcloud/requests/get_vdc_spec.rb
     spec/vcloud/vcloud_spec.rb
     tests/aws/helper.rb
+    tests/aws/models/s3/directory_tests.rb
     tests/aws/requests/ec2/address_tests.rb
+    tests/aws/requests/ec2/availability_zone_tests.rb
+    tests/aws/requests/ec2/instance_tests.rb
+    tests/aws/requests/ec2/key_pair_tests.rb
+    tests/aws/requests/ec2/region_tests.rb
+    tests/aws/requests/ec2/security_group_tests.rb
     tests/aws/requests/ec2/snapshot_tests.rb
     tests/aws/requests/ec2/volume_tests.rb
+    tests/bluebox/helper.rb
+    tests/bluebox/requests/block_tests.rb
+    tests/bluebox/requests/product_tests.rb
+    tests/bluebox/requests/template_tests.rb
     tests/helper.rb
     tests/helper_tests.rb
+    tests/helpers/model_helper.rb
+    tests/linode/helper.rb
+    tests/linode/requests/datacenter_tests.rb
+    tests/linode/requests/distribution_tests.rb
+    tests/linode/requests/linode_tests.rb
+    tests/linode/requests/linodeplans_tests.rb
     tests/rackspace/helper.rb
-    tests/rackspace/requests/servers/create_image_tests.rb
-    tests/rackspace/requests/servers/create_server_tests.rb
-    tests/rackspace/requests/servers/delete_image_tests.rb
-    tests/rackspace/requests/servers/delete_server_tests.rb
-    tests/rackspace/requests/servers/get_flavor_details_tests.rb
-    tests/rackspace/requests/servers/get_image_details_tests.rb
-    tests/rackspace/requests/servers/get_server_details_tests.rb
-    tests/rackspace/requests/servers/list_addresses_tests.rb
-    tests/rackspace/requests/servers/list_flavors_detail_tests.rb
-    tests/rackspace/requests/servers/list_flavors_tests.rb
-    tests/rackspace/requests/servers/list_images_detail_tests.rb
-    tests/rackspace/requests/servers/list_images_tests.rb
-    tests/rackspace/requests/servers/list_private_addresses_tests.rb
-    tests/rackspace/requests/servers/list_public_addresses_tests.rb
-    tests/rackspace/requests/servers/list_servers_detail_tests.rb
-    tests/rackspace/requests/servers/list_servers_tests.rb
-    tests/rackspace/requests/servers/reboot_server_tests.rb
-    tests/rackspace/requests/servers/update_server_tests.rb
+    tests/rackspace/requests/servers/address_tests.rb
+    tests/rackspace/requests/servers/flavor_tests.rb
+    tests/rackspace/requests/servers/image_tests.rb
+    tests/rackspace/requests/servers/server_tests.rb
     tests/slicehost/helper.rb
-    tests/slicehost/requests/create_slice_tests.rb
-    tests/slicehost/requests/delete_slice_tests.rb
-    tests/slicehost/requests/get_backups_tests.rb
-    tests/slicehost/requests/get_flavor_tests.rb
-    tests/slicehost/requests/get_flavors_tests.rb
-    tests/slicehost/requests/get_image_tests.rb
-    tests/slicehost/requests/get_images_tests.rb
-    tests/slicehost/requests/get_slice_tests.rb
-    tests/slicehost/requests/get_slices_tests.rb
-    tests/slicehost/requests/reboot_slice_tests.rb
+    tests/slicehost/requests/backup_tests.rb
+    tests/slicehost/requests/flavor_tests.rb
+    tests/slicehost/requests/image_tests.rb
+    tests/slicehost/requests/slice_tests.rb
   ]
   # = MANIFEST =
 

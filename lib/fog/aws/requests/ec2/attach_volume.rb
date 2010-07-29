@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/attach_volume'
+
         # Attach an Amazon EBS volume with a running instance, exposing as specified device
         #
         # ==== Parameters
@@ -25,6 +27,7 @@ module Fog
             'VolumeId'    => volume_id,
             'InstanceId'  => instance_id,
             'Device'      => device,
+            :idempotent   => true,
             :parser       => Fog::Parsers::AWS::EC2::AttachVolume.new
           )
         end
@@ -53,24 +56,23 @@ module Fog
               response.body = {
                 'requestId' => Fog::AWS::Mock.request_id
               }.merge!(data)
-            else
-              response.status = 400
-              raise(Excon::Errors.status_error({:expects => 200}, response))
+              response
+            elsif !instance
+              raise Fog::AWS::EC2::NotFound.new("The instance ID '#{instance_id}' does not exist.")
+            elsif !volume
+              raise Fog::AWS::EC2::NotFound.new("The volume '#{volume_id}' does not exist.")
             end
           else
-            response.status = 400
-            response.body = {
-              'Code' => 'MissingParameter'
-            }
+            message = 'MissingParameter => '
             if !instance_id
-              response['Message'] = 'The request must contain the parameter instance_id'
+              message << 'The request must contain the parameter instance_id'
             elsif !volume_id
-              response['Message'] = 'The request must contain the parameter volume_id'
+              message << 'The request must contain the parameter volume_id'
             else
-              response['Message'] = 'The request must contain the parameter device'
+              message << 'The request must contain the parameter device'
             end
+            raise Fog::AWS::EC2::Error.new(message)
           end
-          response
         end
 
       end

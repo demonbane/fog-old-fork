@@ -31,8 +31,8 @@ module Fog
           response = Excon::Response.new
           unless @data[:security_groups][name]
             data = {
-              'groupDescription'  => description,
-              'groupName'         => name,
+              'groupDescription'  => CGI.escape(description).gsub('%20', '+'),
+              'groupName'         => CGI.escape(name).gsub('%20', '+'),
               'ipPermissions'     => [],
               'ownerId'           => @owner_id
             }
@@ -41,11 +41,10 @@ module Fog
               'requestId' => Fog::AWS::Mock.request_id,
               'return'    => true
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::Error.new("InvalidGroup.Duplicate => The security group '#{name}' already exists")
           end
-          response
         end
 
       end

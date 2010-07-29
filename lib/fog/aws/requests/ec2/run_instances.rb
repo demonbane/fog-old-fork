@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/run_instances'
+
         # Launch specified instances
         #
         # ==== Parameters
@@ -18,12 +20,13 @@ module Fog
         #   (by default the maximum for an account is 20)
         # * options<~Hash>:
         #   * 'Placement.AvailabilityZone'<~String> - Placement constraint for instances
-        #   * 'BlockDeviceMapping.n.DeviceName'<~String> - where the volume will be exposed to instance
-        #   * 'BlockDeviceMapping.n.VirtualName'<~String> - volume virtual device name
-        #   * 'BlockDeviceMapping.n.Ebs.SnapshotId'<~String> - id of snapshot to boot volume from
-        #   * 'BlockDeviceMapping.n.Ebs.VolumeSize'<~String> - size of volume in GiBs required unless snapshot is specified
-        #   * 'BlockDeviceMapping.n.Ebs.DeleteOnTermination'<~String> - specifies whether or not to delete the volume on instance termination
-        #   * 'SecurityGroup.n'<~String> - Indexed names of security groups for instances
+        #   * 'BlockDeviceMapping'<~Array>: array of hashes
+        #     * 'DeviceName'<~String> - where the volume will be exposed to instance
+        #     * 'VirtualName'<~String> - volume virtual device name
+        #     * 'Ebs.SnapshotId'<~String> - id of snapshot to boot volume from
+        #     * 'Ebs.VolumeSize'<~String> - size of volume in GiBs required unless snapshot is specified
+        #     * 'Ebs.DeleteOnTermination'<~String> - specifies whether or not to delete the volume on instance termination
+        #   * 'SecurityGroup'<~Array> or <~String> - Name of security group(s) for instances
         #   * 'InstanceInitiatedShutdownBehaviour'<~String> - specifies whether volumes are stopped or terminated when instance is shutdown
         #   * 'InstanceType'<~String> - Type of instance to boot. Valid options
         #     in ['m1.small', 'm1.large', 'm1.xlarge', 'c1.medium', 'c1.xlarge', 'm2.2xlarge', 'm2.4xlarge']
@@ -76,6 +79,16 @@ module Fog
         #     * 'requestId'<~String> - Id of request
         #     * 'reservationId'<~String> - Id of reservation
         def run_instances(image_id, min_count, max_count, options = {})
+          if block_device_mapping = options.delete('BlockDeviceMapping')
+            block_device_mapping.each_with_index do |mapping, index|
+              for key, value in mapping
+                options.merge!({ format("BlockDeviceMapping.%d.#{key}", index) => value })
+              end
+            end
+          end
+          if security_groups = [*options.delete('SecurityGroup')]
+            options.merge!(AWS.indexed_param('SecurityGroup', security_groups))
+          end
           if options['UserData']
             options['UserData'] = Base64.encode64(options['UserData'])
           end
@@ -111,7 +124,7 @@ module Fog
               'instanceState'       => { 'code' => 0, 'name' => 'pending' },
               'instanceType'        => options['InstanceType'] || 'm1.small',
               'kernelId'            => options['KernelId'] || Fog::AWS::Mock.kernel_id,
-              'keyName'             => options['KeyName'] || '',
+              # 'keyName'             => options['KeyName'],
               'launchTime'          => Time.now,
               'monitoring'          => { 'state' => options['Monitoring.Enabled'] || false },
               'placement'           => { 'availabilityZone' => options['Placement.AvailabilityZone'] || Fog::AWS::Mock.availability_zone },
@@ -123,6 +136,7 @@ module Fog
             }
             instances_set << instance
             @data[:instances][instance_id] = instance.merge({
+              'architecture'        => 'i386',
               'groupSet'            => group_set,
               'ownerId'             => @owner_id,
               'privateIpAddress'    => nil,

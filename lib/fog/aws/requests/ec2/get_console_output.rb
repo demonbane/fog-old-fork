@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/get_console_output'
+
         # Retrieve console output for specified instance
         #
         # ==== Parameters
@@ -19,6 +21,7 @@ module Fog
           request(
             'Action'      => 'GetConsoleOutput',
             'InstanceId'  => instance_id,
+            :idempotent   => true,
             :parser       => Fog::Parsers::AWS::EC2::GetConsoleOutput.new
           )
         end
@@ -33,15 +36,14 @@ module Fog
             response.status = 200
             response.body = {
               'instanceId'    => instance_id,
-              'output'        => Fog::AWS::Mock.console_output,
+              'output'        => nil,
               'requestId'     => Fog::AWS::Mock.request_id,
               'timestamp'     => Time.now
             }
-          else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            response
+          else;
+            raise Fog::AWS::EC2::NotFound.new("The instance ID '#{instance_id}' does not exist")
           end
-          response
         end
 
       end

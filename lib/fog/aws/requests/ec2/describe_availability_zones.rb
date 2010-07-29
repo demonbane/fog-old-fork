@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_availability_zones'
+
         # Describe all or specified availability zones
         #
         # ==== Params
@@ -19,8 +21,9 @@ module Fog
         def describe_availability_zones(zone_name = [])
           params = AWS.indexed_param('ZoneName', zone_name)
           request({
-            'Action'  => 'DescribeAvailabilityZones',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeAvailabilityZones.new
+            'Action'    => 'DescribeAvailabilityZones',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeAvailabilityZones.new
           }.merge!(params))
         end
 
@@ -43,12 +46,16 @@ module Fog
             availability_zone_info = zones.values
           end
 
-          response.status = 200
-          response.body = {
-            'requestId'             => Fog::AWS::Mock.request_id,
-            'availabilityZoneInfo'  => availability_zone_info
-          }
-          response
+          if zone_name.length == 0 || zone_name.length == availability_zone_info.length
+            response.status = 200
+            response.body = {
+              'requestId'             => Fog::AWS::Mock.request_id,
+              'availabilityZoneInfo'  => availability_zone_info
+            }
+            response
+          else
+            raise Fog::AWS::EC2::Error.new("InvalidParameterValue => Invalid availability zone: #{zone_name.inspect}")
+          end
         end
 
       end

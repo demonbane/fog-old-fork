@@ -31,7 +31,7 @@ module Fog
       end
 
       def run(commands)
-        raise MockNotImplemented.new("Contributions welcome!")
+        Fog::Mock.not_implemented
       end
 
     end
@@ -54,7 +54,7 @@ module Fog
                 sudoable_command  = command.sub(/^sudo/, %{sudo -p 'fog sudo password:'})
                 escaped_command   = sudoable_command.sub(/'/, %{'"'"'})
                 channel.request_pty
-                result = Result.new(command)
+                result = Result.new(escaped_command)
                 channel.exec(%{bash -lc '#{escaped_command}'}) do |channel, success|
                   unless success
                     raise "Could not execute command: #{command.inspect}"

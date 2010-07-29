@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_addresses'
+
         # Describe all or specified IP addresses.
         #
         # ==== Parameters
@@ -18,8 +20,9 @@ module Fog
         def describe_addresses(public_ip = [])
           params = AWS.indexed_param('PublicIp', public_ip)
           request({
-            'Action'  => 'DescribeAddresses',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeAddresses.new
+            'Action'    => 'DescribeAddresses',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeAddresses.new
           }.merge!(params))
         end
 
@@ -41,11 +44,10 @@ module Fog
               'requestId'     => Fog::AWS::Mock.request_id,
               'addressesSet'  => addresses_set
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("Address #{public_ip.inspect} not found.")
           end
-          response
         end
 
       end

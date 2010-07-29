@@ -5,13 +5,7 @@ module Fog
   module AWS
     module S3
 
-      class Real
-        def directories
-          Fog::AWS::S3::Directories.new(:connection => self)
-        end
-      end
-
-      class Mock
+      module Collections
         def directories
           Fog::AWS::S3::Directories.new(:connection => self)
         end
@@ -36,18 +30,13 @@ module Fog
           data = connection.get_bucket(key, options).body
           directory = new(:key => data['Name'])
           options = {}
-          for key, value in data
-            if ['Delimiter', 'IsTruncated', 'Marker', 'MaxKeys', 'Prefix'].include?(key)
-              options[key] = value
+          for k, v in data
+            if ['Delimiter', 'IsTruncated', 'Marker', 'MaxKeys', 'Prefix'].include?(k)
+              options[k] = v
             end
           end
           directory.files.merge_attributes(options)
-          files = data['Contents']
-          while data['IsTruncated']
-            data = connection.get_bucket(key, options.merge!('marker' => files.last['Key'])).body
-            files.concat(data['Contents'])
-          end
-          directory.files.load(files)
+          directory.files.load(data['Contents'])
           directory
         rescue Excon::Errors::NotFound
           nil

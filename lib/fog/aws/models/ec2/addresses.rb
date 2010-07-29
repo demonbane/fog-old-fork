@@ -5,15 +5,7 @@ module Fog
   module AWS
     module EC2
 
-      class Mock
-        def addresses(attributes = {})
-          Fog::AWS::EC2::Addresses.new({
-            :connection => self
-          }.merge!(attributes))
-        end
-      end
-
-      class Real
+      module Collections
         def addresses(attributes = {})
           Fog::AWS::EC2::Addresses.new({
             :connection => self
@@ -51,7 +43,7 @@ module Fog
           if public_ip
             all(public_ip).first
           end
-        rescue Excon::Errors::BadRequest
+        rescue Fog::Errors::NotFound
           nil
         end
 

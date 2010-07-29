@@ -3,6 +3,8 @@ module Fog
     module S3
       class Real
 
+        require 'fog/aws/parsers/s3/get_bucket_location'
+
         # Get location constraint for an S3 bucket
         #
         # ==== Parameters
@@ -20,7 +22,7 @@ module Fog
             :idempotent => true,
             :method   => 'GET',
             :parser   => Fog::Parsers::AWS::S3::GetBucketLocation.new,
-            :query    => 'location'
+            :query    => {'location' => nil}
           })
         end
 

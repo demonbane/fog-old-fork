@@ -1,10 +1,15 @@
 module Fog
   class Collection < Array
 
+    extend Fog::Attributes::ClassMethods
+    include Fog::Attributes::InstanceMethods
+
     Array.public_instance_methods(false).each do |method|
       class_eval <<-RUBY
         def #{method}(*args)
-          lazy_load
+          unless @loaded
+            lazy_load
+          end
           super
         end
       RUBY
@@ -13,58 +18,28 @@ module Fog
     %w[reject select].each do |method|
       class_eval <<-RUBY
         def #{method}(*args)
-          lazy_load
+          unless @loaded
+            lazy_load
+          end
           data = super
-          self.class.new(:connection => self.connection).load(data.map {|member| member.attributes})
+          result = self.clone.clear.concat(data)
         end
       RUBY
     end
 
-    def self._load(marshalled)
-      new(Marshal.load(marshalled))
-    end
-
-    def self.attribute(name, other_names = [])
-      class_eval <<-EOS, __FILE__, __LINE__
-        attr_accessor :#{name}
-      EOS
-      @attributes ||= []
-      @attributes |= [name]
-      for other_name in [*other_names]
-        aliases[other_name] = name
+    def self.model(new_model=nil)
+      if new_model == nil
+        @model
+      else
+        @model = new_model
       end
     end
 
-    def self.model(new_model)
-      @model = new_model
-    end
-    
-    def self.aliases
-      @aliases ||= {}
-    end
+    attr_accessor :connection
 
-    def self.attributes
-      @attributes ||= []
-    end
-
-    def _dump
-      Marshal.dump(attributes)
-    end
-
-    def attributes
-      attributes = {}
-      for attribute in self.class.attributes
-        attributes[attribute] = send("#{attribute}")
-      end
-      attributes
-    end
-
-    def connection=(new_connection)
-      @connection = new_connection
-    end
-
-    def connection
-      @connection
+    def clear
+      @loaded = true
+      super
     end
 
     def create(attributes = {})
@@ -75,7 +50,6 @@ module Fog
 
     def initialize(attributes = {})
       merge_attributes(attributes)
-      @loaded = false
     end
 
     def inspect
@@ -103,10 +77,7 @@ module Fog
     end
 
     def load(objects)
-      if @loaded
-        clear
-      end
-      @loaded = true
+      clear
       for object in objects
         self << new(object)
       end
@@ -115,17 +86,6 @@ module Fog
 
     def model
       self.class.instance_variable_get('@model')
-    end
-
-    def merge_attributes(new_attributes = {})
-      for key, value in new_attributes
-        if aliased_key = self.class.aliases[key]
-          send("#{aliased_key}=", value)
-        else
-          send("#{key}=", value)
-        end
-      end
-      self
     end
 
     def new(attributes = {})
@@ -138,7 +98,9 @@ module Fog
     end
 
     def reload
-      self.clear.concat(all)
+      clear
+      lazy_load
+      self
     end
 
     def table(attributes = nil)
@@ -152,17 +114,7 @@ module Fog
     private
 
     def lazy_load
-      unless @loaded
-        self.all
-      end
-    end
-
-    def remap_attributes(attributes, mapping)
-      for key, value in mapping
-        if attributes.key?(key)
-          attributes[value] = attributes.delete(key)
-        end
-      end
+      self.all
     end
 
   end

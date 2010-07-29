@@ -1,81 +1,64 @@
 module Fog
   module AWS
     module S3
+      extend Fog::Service
 
-      def self.new(options={})
+      requires :aws_access_key_id, :aws_secret_access_key
 
-        unless @required
-          require 'fog/aws/models/s3/directories'
-          require 'fog/aws/models/s3/directory'
-          require 'fog/aws/models/s3/files'
-          require 'fog/aws/models/s3/file'
-          require 'fog/aws/parsers/s3/access_control_list'
-          require 'fog/aws/parsers/s3/copy_object'
-          require 'fog/aws/parsers/s3/get_bucket'
-          require 'fog/aws/parsers/s3/get_bucket_location'
-          require 'fog/aws/parsers/s3/get_bucket_logging'
-          require 'fog/aws/parsers/s3/get_bucket_object_versions'
-          require 'fog/aws/parsers/s3/get_bucket_versioning'
-          require 'fog/aws/parsers/s3/get_request_payment'
-          require 'fog/aws/parsers/s3/get_service'
-          require 'fog/aws/requests/s3/copy_object'
-          require 'fog/aws/requests/s3/delete_bucket'
-          require 'fog/aws/requests/s3/delete_object'
-          require 'fog/aws/requests/s3/get_bucket'
-          require 'fog/aws/requests/s3/get_bucket_acl'
-          require 'fog/aws/requests/s3/get_bucket_location'
-          require 'fog/aws/requests/s3/get_bucket_logging'
-          require 'fog/aws/requests/s3/get_bucket_object_versions'
-          require 'fog/aws/requests/s3/get_bucket_versioning'
-          require 'fog/aws/requests/s3/get_object'
-          require 'fog/aws/requests/s3/get_object_acl'
-          require 'fog/aws/requests/s3/get_object_torrent'
-          require 'fog/aws/requests/s3/get_object_url'
-          require 'fog/aws/requests/s3/get_request_payment'
-          require 'fog/aws/requests/s3/get_service'
-          require 'fog/aws/requests/s3/head_object'
-          require 'fog/aws/requests/s3/put_bucket'
-          require 'fog/aws/requests/s3/put_bucket_acl'
-          require 'fog/aws/requests/s3/put_bucket_logging'
-          require 'fog/aws/requests/s3/put_bucket_versioning'
-          require 'fog/aws/requests/s3/put_object'
-          require 'fog/aws/requests/s3/put_request_payment'
-          @required = true
-        end
+      model_path 'fog/aws/models/s3'
+      model 'directories'
+      model 'directory'
+      model 'files'
+      model 'file'
 
-        if Fog.mocking?
-          Fog::AWS::S3::Mock.new(options)
-        else
-          Fog::AWS::S3::Real.new(options)
-        end
-      end
-
-      def self.parse_data(data)
-        metadata = {
-          :body => nil,
-          :headers => {}
-        }
-
-        if data.is_a?(String)
-          metadata[:body] = data
-          metadata[:headers]['Content-Length'] = metadata[:body].size.to_s
-        else
-          filename = ::File.basename(data.path)
-          unless (mime_types = MIME::Types.of(filename)).empty?
-            metadata[:headers]['Content-Type'] = mime_types.first.content_type
-          end
-          metadata[:body] = data.read
-          metadata[:headers]['Content-Length'] = ::File.size(data.path).to_s
-        end
-        # metadata[:headers]['Content-MD5'] = Base64.encode64(Digest::MD5.digest(metadata[:body])).strip
-        metadata
-      end
-
-      def self.reset_data(keys=Mock.data.keys)
-        Mock.reset_data(keys)
-      end
+      request_path 'fog/aws/requests/s3'
+      request 'copy_object'
+      request 'delete_bucket'
+      request 'delete_object'
+      request 'get_bucket'
+      request 'get_bucket_acl'
+      request 'get_bucket_location'
+      request 'get_bucket_logging'
+      request 'get_bucket_object_versions'
+      request 'get_bucket_versioning'
+      request 'get_object'
+      request 'get_object_acl'
+      request 'get_object_torrent'
+      request 'get_object_url'
+      request 'get_request_payment'
+      request 'get_service'
+      request 'head_object'
+      request 'put_bucket'
+      request 'put_bucket_acl'
+      request 'put_bucket_logging'
+      request 'put_bucket_versioning'
+      request 'put_object'
+      request 'put_object_url'
+      request 'put_request_payment'
 
       module Utils
+
+        def parse_data(data)
+          metadata = {
+            :body => nil,
+            :headers => {}
+          }
+
+          if data.is_a?(String)
+            metadata[:body] = data
+            metadata[:headers]['Content-Length'] = metadata[:body].size.to_s
+          else
+            filename = ::File.basename(data.path)
+            unless (mime_types = MIME::Types.of(filename)).empty?
+              metadata[:headers]['Content-Type'] = mime_types.first.content_type
+            end
+            metadata[:body] = data
+            metadata[:headers]['Content-Length'] = ::File.size(data.path).to_s
+          end
+          # metadata[:headers]['Content-MD5'] = Base64.encode64(Digest::MD5.digest(metadata[:body])).strip
+          metadata
+        end
+
         def url(params, expires)
           params[:headers]['Date'] = expires.to_i
           query = [params[:query]].compact
@@ -84,9 +67,11 @@ module Fog
           query << "Expires=#{params[:headers]['Date']}"
           "http://#{params[:host]}/#{params[:path]}?#{query.join('&')}"
         end
+
       end
 
       class Mock
+        include Collections
         include Utils
 
         def self.data
@@ -114,7 +99,10 @@ module Fog
       end
 
       class Real
+        include Collections
         include Utils
+        extend Fog::Deprecation
+        deprecate(:reset, :reload)
 
         # Initialize connection to S3
         #
@@ -134,14 +122,10 @@ module Fog
         # ==== Returns
         # * S3 object with connection to aws.
         def initialize(options={})
-          unless @aws_access_key_id = options[:aws_access_key_id]
-            raise ArgumentError.new('aws_access_key_id is required to access ec2')
-          end
-          unless @aws_secret_access_key = options[:aws_secret_access_key]
-            raise ArgumentError.new('aws_secret_access_key is required to access ec2')
-          end
-          @hmac       = HMAC::SHA1.new(@aws_secret_access_key)
-          @host       = options[:host] || case options[:region]
+          @aws_access_key_id = options[:aws_access_key_id]
+          @aws_secret_access_key = options[:aws_secret_access_key]
+          @hmac = Fog::HMAC.new('sha1', @aws_secret_access_key)
+          @host = options[:host] || case options[:region]
             when 'ap-southeast-1'
               's3-ap-southeast-1.amazonaws.com'
             when 'us-west-1'
@@ -149,14 +133,18 @@ module Fog
             else
               's3.amazonaws.com'
             end
-          @port       = options[:port]      || 443
-          @scheme     = options[:scheme]    || 'https'
+          @port   = options[:port]      || 443
+          @scheme = options[:scheme]    || 'https'
+          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}", options[:persistent] || true)
+        end
+
+        def reload
+          @connection.reset
         end
 
         private
 
         def request(params, &block)
-          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}")
           params[:headers]['Date'] = Time.now.utc.strftime("%a, %d %b %Y %H:%M:%S +0000")
           params[:headers]['Authorization'] = "AWS #{@aws_access_key_id}:#{signature(params)}"
 
@@ -181,8 +169,8 @@ DATA
             end
           end
           amz_headers = amz_headers.sort {|x, y| x[0] <=> y[0]}
-          for pair in amz_headers
-            canonical_amz_headers << "#{pair[0]}:#{pair[1]}\n"
+          for key, value in amz_headers
+            canonical_amz_headers << "#{key}:#{value}\n"
           end
           string_to_sign << "#{canonical_amz_headers}"
 
@@ -203,13 +191,17 @@ DATA
             canonical_resource << "#{CGI.escape(subdomain).downcase}/"
           end
           canonical_resource << "#{params[:path]}"
-          if ['acl', 'location', 'logging', 'requestPayment', 'torrent', 'versioning'].include?(params[:query])
-            canonical_resource << "?#{params[:query]}"
+          canonical_resource << '?'
+          for key in (params[:query] || {}).keys
+            if ['acl', 'location', 'logging', 'requestPayment', 'torrent', 'versions', 'versioning'].include?(key)
+              canonical_resource << "#{key}&"
+            end
           end
+          canonical_resource.chop!
           string_to_sign << "#{canonical_resource}"
 
-          hmac = @hmac.update(string_to_sign)
-          signature = Base64.encode64(hmac.digest).chomp!
+          signed_string = @hmac.sign(string_to_sign)
+          signature = Base64.encode64(signed_string).chomp!
         end
       end
     end

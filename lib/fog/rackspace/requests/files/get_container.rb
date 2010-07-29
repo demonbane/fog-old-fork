@@ -29,16 +29,11 @@ module Fog
         #       * 'last_modified'<~String> - Last modified timestamp
         #       * 'name'<~String> - Name of object
         def get_container(container, options = {})
-          query = ''
-          for key, value in options.merge!({ 'format' => 'json' })
-            query << "#{key}=#{value}&"
-          end
-          query.chop!
           response = storage_request(
             :expects  => 200,
             :method   => 'GET',
             :path     => container,
-            :query    => query
+            :query    => {'format' => 'json'}.merge!(options)
           )
           response
         end
@@ -48,7 +43,7 @@ module Fog
       class Mock
 
         def get_container(container, options = {})
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

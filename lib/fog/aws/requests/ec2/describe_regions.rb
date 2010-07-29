@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_regions'
+
         # Describe all or specified regions
         #
         # ==== Params
@@ -18,8 +20,9 @@ module Fog
         def describe_regions(region_name = [])
           params = AWS.indexed_param('RegionName', region_name)
           request({
-            'Action'  => 'DescribeRegions',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeRegions.new
+            'Action'    => 'DescribeRegions',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeRegions.new
           }.merge!(params))
         end
 
@@ -40,12 +43,16 @@ module Fog
             region_info = regions.values
           end
 
-          response.status = 200
-          response.body = {
-            'requestId'   => Fog::AWS::Mock.request_id,
-            'regionInfo'  => region_info
-          }
-          response
+          if region_name.length == 0 || region_name.length == region_info.length
+            response.status = 200
+            response.body = {
+              'requestId'   => Fog::AWS::Mock.request_id,
+              'regionInfo'  => region_info
+            }
+            response
+          else
+            raise Fog::AWS::EC2::Error.new("InvalidParameterValue => Invalid region: #{region_name.inspect}")
+          end
         end
 
       end

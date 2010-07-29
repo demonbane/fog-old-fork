@@ -24,7 +24,7 @@ module Fog
       class Mock
 
         def get_object(container, object)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

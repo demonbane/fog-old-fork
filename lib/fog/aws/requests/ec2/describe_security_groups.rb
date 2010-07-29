@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_security_groups'
+
         # Describe all or specified security groups
         #
         # ==== Parameters
@@ -28,8 +30,9 @@ module Fog
         def describe_security_groups(group_name = [])
           params = AWS.indexed_param('GroupName', group_name)
           request({
-            'Action'  => 'DescribeSecurityGroups',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeSecurityGroups.new
+            'Action'    => 'DescribeSecurityGroups',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeSecurityGroups.new
           }.merge!(params))
         end
 
@@ -51,11 +54,10 @@ module Fog
               'requestId'         => Fog::AWS::Mock.request_id,
               'securityGroupInfo' => security_group_info
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The security group #{group_name.inspect} does not exist")
           end
-          response
         end
 
       end

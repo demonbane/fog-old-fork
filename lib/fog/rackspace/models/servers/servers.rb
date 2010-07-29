@@ -5,13 +5,7 @@ module Fog
   module Rackspace
     module Servers
 
-      class Mock
-        def servers
-          Fog::Rackspace::Servers::Servers.new(:connection => self)
-        end
-      end
-
-      class Real
+      module Collections
         def servers
           Fog::Rackspace::Servers::Servers.new(:connection => self)
         end
@@ -26,11 +20,18 @@ module Fog
           load(data)
         end
 
+        def bootstrap(new_attributes = {})
+          server = create(new_attributes)
+          server.wait_for { ready? }
+          server.setup
+          server
+        end
+
         def get(server_id)
           if server = connection.get_server_details(server_id).body['server']
             new(server)
           end
-        rescue Excon::Errors::NotFound
+        rescue Fog::Rackspace::Servers::NotFound
           nil
         end
 

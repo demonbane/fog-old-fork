@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_snapshots'
+
         # Describe all or specified snapshots
         #
         # ==== Parameters
@@ -25,8 +27,9 @@ module Fog
           options['Owner'] ||= 'self'
           options.merge!(AWS.indexed_param('SnapshotId', snapshot_id))
           request({
-            'Action'  => 'DescribeSnapshots',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeSnapshots.new
+            'Action'    => 'DescribeSnapshots',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeSnapshots.new
           }.merge!(options))
         end
 
@@ -65,11 +68,10 @@ module Fog
               'requestId' => Fog::AWS::Mock.request_id,
               'snapshotSet' => snapshot_set
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The snapshot #{snapshot_id.inspect} does not exist.")
           end
-          response
         end
 
       end

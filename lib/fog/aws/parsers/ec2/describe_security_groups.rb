@@ -50,13 +50,13 @@ module Fog
               if @in_groups
                 @ip_permission['groups'] << @group
                 @group = {}
-              elsif @in_ip_permissions
-                @security_group['ipPermissions'] << @ip_permission
-                @ip_permission = { 'groups' => [], 'ipRanges' => []}
               elsif @in_ip_ranges
                 @ip_permission['ipRanges'] << @ip_range
                 @ip_range = {}
-              else
+              elsif @in_ip_permissions
+                @security_group['ipPermissions'] << @ip_permission
+                @ip_permission = { 'groups' => [], 'ipRanges' => []}
+               else
                 @response['securityGroupInfo'] << @security_group
                 @security_group = { 'ipPermissions' => [] }
               end

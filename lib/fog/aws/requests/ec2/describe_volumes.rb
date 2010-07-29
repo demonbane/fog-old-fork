@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/describe_volumes'
+
         # Describe all or specified volumes.
         #
         # ==== Parameters
@@ -27,8 +29,9 @@ module Fog
         def describe_volumes(volume_id = [])
           params = AWS.indexed_param('VolumeId', volume_id)
           request({
-            'Action'  => 'DescribeVolumes',
-            :parser   => Fog::Parsers::AWS::EC2::DescribeVolumes.new
+            'Action'    => 'DescribeVolumes',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::DescribeVolumes.new
           }.merge!(params))
         end
 
@@ -50,8 +53,8 @@ module Fog
               case volume['status']
               when 'attaching'
                 if Time.now - volume['attachmentSet'].first['attachTime'] > Fog::Mock.delay
-                  volume['attachmentSet'].first['status'] = 'attached'
-                  volume['status'] = 'attached'
+                  volume['attachmentSet'].first['status'] = 'in-use'
+                  volume['status'] = 'in-use'
                 end
               when 'creating'
                 if Time.now - volume['createTime'] > Fog::Mock.delay
@@ -71,11 +74,10 @@ module Fog
               'requestId' => Fog::AWS::Mock.request_id,
               'volumeSet' => volume_set
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The volume #{volume_id.inspect} does not exist.")
           end
-          response
         end
 
       end

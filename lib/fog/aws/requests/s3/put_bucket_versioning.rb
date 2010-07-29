@@ -22,7 +22,7 @@ DATA
             :headers  => {},
             :host     => "#{bucket_name}.#{@host}",
             :method   => 'PUT',
-            :query    => 'versioning'
+            :query    => {'versioning' => nil}
           })
         end
 
@@ -31,7 +31,7 @@ DATA
       class Mock
 
         def put_bucket_versioning(bucket_name, status)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

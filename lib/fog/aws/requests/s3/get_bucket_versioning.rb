@@ -3,6 +3,8 @@ module Fog
     module S3
       class Real
 
+        require 'fog/aws/parsers/s3/get_bucket_versioning'
+
         # Get versioning status for an S3 bucket
         #
         # ==== Parameters
@@ -25,7 +27,7 @@ module Fog
             :idempotent => true,
             :method     => 'GET',
             :parser     => Fog::Parsers::AWS::S3::GetBucketVersioning.new,
-            :query      => 'versioning'
+            :query      => {'versioning' => nil}
           })
         end
 
@@ -34,7 +36,7 @@ module Fog
       class Mock
 
         def get_bucket_versioning(bucket_name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

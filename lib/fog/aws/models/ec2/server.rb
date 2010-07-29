@@ -31,7 +31,7 @@ module Fog
         attribute :state,                 'instanceState'
         attribute :user_data
 
-        def initialize(attributes)
+        def initialize(attributes={})
           @groups ||= ["default"]
           @flavor_id ||= 'm1.small'
           super
@@ -115,30 +115,32 @@ module Fog
         def save
           requires :image_id
 
-          options = {'InstanceType' => flavor.id}
-          if @availability_zone
-            options['Placement.AvailabilityZone'] = @availability_zone
-          end
-          unless @groups.empty?
-            options.merge!(AWS.indexed_param("SecurityGroup", @groups))
-          end
-          if @kernel_id
-            options['KernelId'] = @kernel_id
-          end
-          if @key_name
-            options['KeyName'] = @key_name
-          end
-          if @monitoring
-            options['Monitoring.Enabled'] = @monitoring
-          end
-          if @ramdisk_id
-            options['RamdiskId'] = @ramdisk_id
-          end
-          if @user_data
-            options['UserData'] = @user_data
-          end
+          options = {
+            'BlockDeviceMapping'          => @block_device_mapping,
+            'InstanceType'                => flavor_id,
+            'KernelId'                    => @kernel_id,
+            'KeyName'                     => @key_name,
+            'Monitoring.Enabled'          => @monitoring,
+            'Placement.AvailabilityZone'  => @availability_zone,
+            'RamdiskId'                   => @ramdisk_id,
+            'SecurityGroup'               => @groups,
+            'UserData'                    => @user_data
+          }
+
           data = connection.run_instances(@image_id, 1, 1, options)
           merge_attributes(data.body['instancesSet'].first)
+          true
+        end
+
+        def start
+          requires :id
+          connection.start_instances(@id)
+          true
+        end
+
+        def stop
+          requires :id
+          connection.stop_instances(@id)
           true
         end
 

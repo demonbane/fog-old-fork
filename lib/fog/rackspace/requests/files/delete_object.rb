@@ -23,7 +23,7 @@ module Fog
       class Mock
 
         def delete_object(container, object)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

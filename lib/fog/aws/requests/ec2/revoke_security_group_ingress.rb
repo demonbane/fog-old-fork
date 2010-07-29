@@ -24,8 +24,9 @@ module Fog
         #     * 'return'<~Boolean> - success?
         def revoke_security_group_ingress(options = {})
           request({
-            'Action'  => 'RevokeSecurityGroupIngress',
-            :parser   => Fog::Parsers::AWS::EC2::Basic.new
+            'Action'    => 'RevokeSecurityGroupIngress',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::Basic.new
           }.merge!(options))
         end
 
@@ -34,27 +35,36 @@ module Fog
       class Mock
 
         def revoke_security_group_ingress(options = {})
-          if options['GroupName'] && options['SourceSecurityGroupName'] && options['SourceSecurityGroupOwnerId']
-            raise MockNotImplemented.new("Contributions welcome!")
-          else
-            response = Excon::Response.new
-            group = @data[:security_groups][options['GroupName']]
-
-            ingress = group['ipPermissions'].select {|permission|
-              permission['fromPort']    == options['FromPort'] &&
-              permission['ipProtocol']  == options['IpProtocol'] &&
-              permission['toPort']      == options['ToPort'] &&
-              permission['ipRanges'].first['cidrIp'] == options['CidrIp']
-            }.first
-
-            group['ipPermissions'].delete(ingress)
-
+          response = Excon::Response.new
+          group = @data[:security_groups][options['GroupName']]
+          if group
+            if options['GroupName'] && options['SourceSecurityGroupName'] && options['SourceSecurityGroupOwnerId']
+              group['ipPermissions'].delete_if {|permission|
+                permission['groups'].first['groupName'] == options['GroupName']
+              }
+            else
+              ingress = group['ipPermissions'].select {|permission|
+                permission['fromPort']    == options['FromPort'] &&
+                permission['ipProtocol']  == options['IpProtocol'] &&
+                permission['toPort']      == options['ToPort'] &&
+                (
+                  permission['ipRanges'].empty? ||
+                  (
+                    permission['ipRanges'].first &&
+                    permission['ipRanges'].first['cidrIp'] == options['CidrIp']
+                  )
+                )
+              }.first
+              group['ipPermissions'].delete(ingress)
+            end
             response.status = 200
             response.body = {
               'requestId' => Fog::AWS::Mock.request_id,
               'return'    => true
             }
             response
+          else
+            raise Fog::AWS::EC2::NotFound.new("The security group '#{options['GroupName']}' does not exist")
           end
         end
 

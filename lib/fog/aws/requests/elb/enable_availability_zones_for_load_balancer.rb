@@ -3,6 +3,8 @@ module Fog
     module ELB
       class Real
 
+        require 'fog/aws/parsers/elb/enable_availability_zones_for_load_balancer'
+
         # Enable an availability zone for an existing ELB
         #
         # ==== Parameters
@@ -17,7 +19,7 @@ module Fog
         #     * 'EnableAvailabilityZonesForLoadBalancerResult'<~Hash>:
         #       * 'AvailabilityZones'<~Array> - array of strings describing instances currently enabled
         def enable_availability_zones_for_load_balancer(availability_zones, lb_name)
-          params = ELB.indexed_param('AvailabilityZones.member', [*availability_zones], 1)
+          params = AWS.indexed_param('AvailabilityZones.member', [*availability_zones], 1)
           request({
             'Action'           => 'EnableAvailabilityZonesForLoadBalancer',
             'LoadBalancerName' => lb_name,
@@ -32,7 +34,7 @@ module Fog
       class Mock
 
         def enable_availability_zones_for_load_balancer(availability_zones, lb_name)
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
         alias :enable_zones :enable_availability_zones_for_load_balancer

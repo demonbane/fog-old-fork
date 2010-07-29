@@ -24,8 +24,9 @@ module Fog
         #     * 'return'<~Boolean> - success?
         def authorize_security_group_ingress(options = {})
           request({
-            'Action'  => 'AuthorizeSecurityGroupIngress',
-            :parser   => Fog::Parsers::AWS::EC2::Basic.new
+            'Action'    => 'AuthorizeSecurityGroupIngress',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::Basic.new
           }.merge!(options))
         end
 
@@ -36,33 +37,47 @@ module Fog
         def authorize_security_group_ingress(options = {})
           response = Excon::Response.new
           group = @data[:security_groups][options['GroupName']]
-          group['ipPermissions'] ||= []
 
-          if options['GroupName'] && options['SourceSecurityGroupName'] && options['SourceSecurityGroupOwnerId']
-            ['icmp', 'tcp', 'udp'].each do |protocol|
+          if group
+            group['ipPermissions'] ||= []
+            if options['GroupName'] && options['SourceSecurityGroupName'] && options['SourceSecurityGroupOwnerId']
+              ['tcp', 'udp'].each do |protocol|
+                group['ipPermissions'] << {
+                  'groups'      => [{'groupName' => options['GroupName'], 'userId' => @owner_id}],
+                  'fromPort'    => 1,
+                  'ipRanges'    => [],
+                  'ipProtocol'  => protocol,
+                  'toPort'      => 65535
+                }
+              end
               group['ipPermissions'] << {
                 'groups'      => [{'groupName' => options['GroupName'], 'userId' => @owner_id}],
-                'fromPort'    => 1,
+                'fromPort'    => -1,
                 'ipRanges'    => [],
-                'ipProtocol'  => protocol,
-                'toPort'      => 65535
+                'ipProtocol'  => 'icmp',
+                'toPort'      => -1
               }
+            else
+              group['ipPermissions'] << {
+                'groups'      => [],
+                'fromPort'    => options['FromPort'],
+                'ipRanges'    => [],
+                'ipProtocol'  => options['IpProtocol'],
+                'toPort'      => options['ToPort']
+              }
+              if options['CidrIp']
+                group['ipPermissions'].last['ipRanges'] << { 'cidrIp' => options['CidrIp'] }
+              end
             end
-          else
-            group['ipPermissions'] << {
-              'groups'      => [],
-              'fromPort'    => options['FromPort'],
-              'ipRanges'    => [{ 'cidrIp' => options['CidrIp'] }],
-              'ipProtocol'  => options['IpProtocol'],
-              'toPort'      => options['ToPort']
+            response.status = 200
+            response.body = {
+              'requestId' => Fog::AWS::Mock.request_id,
+              'return'    => true
             }
+            response
+          else
+            raise Fog::AWS::EC2::NotFound.new("The security group '#{options['GroupName']}' does not exist")
           end
-          response.status = 200
-          response.body = {
-            'requestId' => Fog::AWS::Mock.request_id,
-            'return'    => true
-          }
-          response
         end
 
       end

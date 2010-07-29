@@ -5,15 +5,7 @@ module Fog
   module Rackspace
     module Servers
 
-      class Real
-        def images(attributes = {})
-          Fog::Rackspace::Servers::Images.new({
-            :connection => self
-          }.merge!(attributes))
-        end
-      end
-
-      class Mock
+      module Collections
         def images(attributes = {})
           Fog::Rackspace::Servers::Images.new({
             :connection => self
@@ -38,7 +30,7 @@ module Fog
         def get(image_id)
           data = connection.get_image_details(image_id).body['image']
           new(data)
-        rescue Excon::Errors::NotFound
+        rescue Fog::Rackspace::Servers::NotFound
           nil
         end
 

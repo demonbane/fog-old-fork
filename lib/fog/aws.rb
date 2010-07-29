@@ -6,10 +6,13 @@ require 'fog/aws/simpledb'
 module Fog
   module AWS
 
-    def self.indexed_param(key, values)
+    def self.indexed_param(key, values, offset = 0)
       params = {}
+      unless key.include?('%d')
+        key << '.%d'
+      end
       [*values].each_with_index do |value, index|
-        params["#{key}.#{index}"] = value
+        params[format(key, index + offset)] = value
       end
       params
     end
@@ -30,8 +33,8 @@ module Fog
         end
       end
       string_to_sign = "POST\n#{options[:host]}\n/\n" << body.chop
-      hmac = options[:hmac].update(string_to_sign)
-      body << "Signature=#{CGI.escape(Base64.encode64(hmac.digest).chomp!).gsub(/\+/, '%20')}"
+      signed_string = options[:hmac].sign(string_to_sign)
+      body << "Signature=#{CGI.escape(Base64.encode64(signed_string).chomp!).gsub(/\+/, '%20')}"
 
       body
     end
@@ -54,10 +57,6 @@ module Fog
         "ip-#{ip_address.gsub('.','-')}.ec2.internal"
       end
 
-      def self.console_output
-        'This is my console. There are many like it, but this one is mine. My console is my best friend. It is my life. I must master it as I master my life. My console, without me, is useless. Without my console, I am useless.'
-      end
-
       def self.etag
         hex(32)
       end
@@ -68,16 +67,19 @@ module Fog
           path << letters(rand(9) + 8)
         end
         {
-          "imageOwnerId"  => letters(rand(5) + 4),
-          "productCodes"  => [],
-          "kernelId"      => kernel_id,
-          "ramdiskId"     => ramdisk_id,
-          "imageState"    => "available",
-          "imageId"       => image_id,
-          "architecture"  => "i386",
-          "isPublic"      => true,
-          "imageLocation" => path.join('/'),
-          "imageType"     => "machine"
+          "imageOwnerId"   => letters(rand(5) + 4),
+          "blockDeviceMapping" => [],
+          "productCodes"   => [],
+          "kernelId"       => kernel_id,
+          "ramdiskId"      => ramdisk_id,
+          "imageState"     => "available",
+          "imageId"        => image_id,
+          "architecture"   => "i386",
+          "isPublic"       => true,
+          "imageLocation"  => path.join('/'),
+          "imageType"      => "machine",
+          "rootDeviceType" => ["ebs","instance-store"][rand(2)],
+          "rootDeviceName" => "/dev/sda1"
         }
       end
 

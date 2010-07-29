@@ -1,43 +1,31 @@
 module Fog
   module Slicehost
+    extend Fog::Service
 
-    def self.new(options={})
+    requires :slicehost_password
 
-      unless @required
-        require 'fog/slicehost/models/flavor'
-        require 'fog/slicehost/models/flavors'
-        require 'fog/slicehost/models/image'
-        require 'fog/slicehost/models/images'
-        require 'fog/slicehost/models/server'
-        require 'fog/slicehost/models/servers'
-        require 'fog/slicehost/requests/create_slice'
-        require 'fog/slicehost/requests/delete_slice'
-        require 'fog/slicehost/requests/get_backups'
-        require 'fog/slicehost/requests/get_flavor'
-        require 'fog/slicehost/requests/get_flavors'
-        require 'fog/slicehost/requests/get_image'
-        require 'fog/slicehost/requests/get_images'
-        require 'fog/slicehost/requests/get_slice'
-        require 'fog/slicehost/requests/get_slices'
-        require 'fog/slicehost/requests/reboot_slice'
-        @required = true
-      end
+    model_path 'fog/slicehost/models'
+    model 'flavor'
+    model 'flavors'
+    model 'image'
+    model 'images'
+    model 'server'
+    model 'servers'
 
-      unless options[:slicehost_password]
-        raise ArgumentError.new('slicehost_password is required to access slicehost')
-      end
-      if Fog.mocking?
-        Fog::Slicehost::Mock.new(options)
-      else
-        Fog::Slicehost::Real.new(options)
-      end
-    end
-
-    def self.reset_data(keys=Mock.data.keys)
-      Mock.reset_data(keys)
-    end
+    request_path 'fog/slicehost/requests'
+    request 'create_slice'
+    request 'delete_slice'
+    request 'get_backups'
+    request 'get_flavor'
+    request 'get_flavors'
+    request 'get_image'
+    request 'get_images'
+    request 'get_slice'
+    request 'get_slices'
+    request 'reboot_slice'
 
     class Mock
+      include Collections
 
       def self.data
         @data ||= Hash.new do |hash, key|
@@ -59,35 +47,42 @@ module Fog
     end
 
     class Real
+      include Collections
 
       def initialize(options={})
         @slicehost_password = options[:slicehost_password]
         @host   = options[:host]    || "api.slicehost.com"
         @port   = options[:port]    || 443
         @scheme = options[:scheme]  || 'https'
+        @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}", options[:persistent])
+      end
+
+      def reload
+        @connection.reset
       end
 
       def request(params)
-        @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}")
-        headers = {
+        params[:headers] ||= {}
+        params[:headers].merge!({
           'Authorization' => "Basic #{Base64.encode64(@slicehost_password).delete("\r\n")}"
-        }
+        })
         case params[:method]
         when 'DELETE', 'GET', 'HEAD'
-          headers['Accept'] = 'application/xml'
+          params[:headers]['Accept'] = 'application/xml'
         when 'POST', 'PUT'
-          headers['Content-Type'] = 'application/xml'
+          params[:headers]['Content-Type'] = 'application/xml'
         end
 
-        response = @connection.request({
-          :body     => params[:body],
-          :expects  => params[:expects],
-          :headers  => headers.merge!(params[:headers] || {}),
-          :host     => @host,
-          :method   => params[:method],
-          :parser   => params[:parser],
-          :path     => params[:path]
-        })
+        begin
+          response = @connection.request(params.merge!({:host => @host}))
+        rescue Excon::Errors::Error => error
+          raise case error
+          when Excon::Errors::NotFound
+            Fog::Slicehost::NotFound.slurp(error)
+          else
+            error
+          end
+        end
 
         response
       end

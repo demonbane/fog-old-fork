@@ -3,6 +3,8 @@ module Fog
     module ELB
       class Real
 
+        require 'fog/aws/parsers/elb/describe_instance_health'
+
         # Get health status for one or more instances on an existing ELB
         #
         # ==== Parameters
@@ -21,7 +23,7 @@ module Fog
         #         * 'InstanceId'<~String>
         #         * 'ReasonCode'<~String>
         def describe_instance_health(lb_name, instance_ids = [])
-          params = ELB.indexed_param('Instances.member.%.InstanceId', [*instance_ids], 1)
+          params = AWS.indexed_param('Instances.member.%.InstanceId', [*instance_ids], 1)
           request({
             'Action'           => 'DescribeInstanceHealth',
             'LoadBalancerName' => lb_name,
@@ -34,7 +36,7 @@ module Fog
       class Mock
 
         def describe_instance_health(lb_name, instance_ids = [])
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

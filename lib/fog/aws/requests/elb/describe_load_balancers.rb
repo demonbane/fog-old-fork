@@ -3,6 +3,8 @@ module Fog
     module ELB
       class Real
 
+        require 'fog/aws/parsers/elb/describe_load_balancers'
+
         # Describe all or specified load balancers
         #
         # ==== Parameters
@@ -36,7 +38,7 @@ module Fog
         #         * 'AvailabilityZones'<~Array> - list of availability zones covered by this load balancer
         #         * 'Instances'<~Array> - list of instances that the load balancer balances between
         def describe_load_balancers(lb_name = [])
-          params = ELB.indexed_param('LoadBalancerNames.member', [*lb_name], 1)
+          params = AWS.indexed_param('LoadBalancerNames.member', [*lb_name], 1)
           request({
             'Action'  => 'DescribeLoadBalancers',
             :parser   => Fog::Parsers::AWS::ELB::DescribeLoadBalancers.new
@@ -48,7 +50,7 @@ module Fog
       class Mock
 
         def describe_load_balancers(lb_name = [])
-          raise MockNotImplemented.new("Contributions welcome!")
+          Fog::Mock.not_implemented
         end
 
       end

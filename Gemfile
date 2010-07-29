@@ -1,13 +1,13 @@
 source 'http://gemcutter.org'
 
 gem 'rake'
-gem 'excon', '>= 0.0.24'
-gem 'formatador', ">= 0.0.10"
-gem 'json', ">= 0"
+gem 'builder',    '>= 0'
+gem 'excon',      '>= 0.2.0'
+gem 'formatador', ">= 0.0.15"
+gem 'json',       ">= 0"
 gem 'mime-types', ">= 0"
-gem 'net-ssh', ">= 0"
-gem 'nokogiri', ">= 0"
-gem 'ruby-hmac', ">= 0"
-gem 'rspec', '>= 0'
-gem 'shindo', '>= 0'
-gem 'builder', '>= 0'
+gem 'net-ssh',    ">= 0"
+gem 'nokogiri',   ">= 1.4.3.1"
+gem 'rspec',      '>= 0'
+gem 'ruby-hmac',  '>= 0'
+gem 'shindo',     '>= 0.1.6'

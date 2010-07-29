@@ -17,6 +17,7 @@ module Fog
           request(
             'Action'    => 'DeleteVolume',
             'VolumeId'  => volume_id,
+            :idempotent => true,
             :parser     => Fog::Parsers::AWS::EC2::Basic.new
           )
         end
@@ -35,11 +36,10 @@ module Fog
               'requestId' => Fog::AWS::Mock.request_id,
               'return'    => true
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The volume '#{volume_id}' does not exist.")
           end
-          response
         end
 
       end

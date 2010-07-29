@@ -20,7 +20,7 @@ module Fog
               response[name] = @value.to_f
             when 'Name'
               @attribute = @value
-              response['Attributes'][@attribute] = []
+              response['Attributes'][@attribute] ||= []
             when 'RequestId'
               response[name] = @value
             when 'Value'

@@ -1,3 +1,4 @@
+require 'yaml'
 module Fog
   class << self
 
@@ -31,13 +32,18 @@ module Fog
 :#{credential}:
   :aws_access_key_id:     INTENTIONALLY_LEFT_BLANK
   :aws_secret_access_key: INTENTIONALLY_LEFT_BLANK
+  :bluebox_api_key:       INTENTIONALLY_LEFT_BLANK
+  :bluebox_customer_id:   INTENTIONALLY_LEFT_BLANK
   :local_root:            INTENTIONALLY_LEFT_BLANK
+  :new_servers_password:  INTENTIONALLY_LEFT_BLANK
+  :new_servers_username:  INTENTIONALLY_LEFT_BLANK
+  :public_key_path:       INTENTIONALLY_LEFT_BLANK
+  :private_key_path:      INTENTIONALLY_LEFT_BLANK
   :rackspace_api_key:     INTENTIONALLY_LEFT_BLANK
   :rackspace_username:    INTENTIONALLY_LEFT_BLANK
   :slicehost_password:    INTENTIONALLY_LEFT_BLANK
   :terremark_username:    INTENTIONALLY_LEFT_BLANK
   :terremark_password:    INTENTIONALLY_LEFT_BLANK
-
 YML
           print(yml)
           raise(ArgumentError.new("Missing Credentials"))

@@ -16,8 +16,9 @@ module Fog
         def reboot_instances(instance_id = [])
           params = AWS.indexed_param('InstanceId', instance_id)
           request({
-            'Action'  => 'RebootInstances',
-            :parser   => Fog::Parsers::AWS::EC2::Basic.new
+            'Action'    => 'RebootInstances',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::Basic.new
           }.merge!(params))
         end
 
@@ -37,11 +38,10 @@ module Fog
               'requestId' => Fog::AWS::Mock.request_id,
               'return'    => true
             }
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The instance ID #{instance_id.inspect} does not exist")
           end
-          response
         end
 
       end

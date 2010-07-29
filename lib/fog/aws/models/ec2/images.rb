@@ -5,13 +5,7 @@ module Fog
   module AWS
     module EC2
 
-      class Mock
-        def images
-          Fog::AWS::EC2::Images.new(:connection => self)
-        end
-      end
-
-      class Real
+      module Collections
         def images
           Fog::AWS::EC2::Images.new(:connection => self)
         end
@@ -38,7 +32,7 @@ module Fog
           if image_id
             all(image_id).first
           end
-        rescue Excon::Errors::BadRequest
+        rescue Fog::Errors::NotFound
           nil
         end
       end

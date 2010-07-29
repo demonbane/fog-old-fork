@@ -3,6 +3,8 @@ module Fog
     module EC2
       class Real
 
+        require 'fog/aws/parsers/ec2/terminate_instances'
+
         # Terminate specified instances
         #
         # ==== Parameters
@@ -23,8 +25,9 @@ module Fog
         def terminate_instances(instance_id)
           params = AWS.indexed_param('InstanceId', instance_id)
           request({
-            'Action' => 'TerminateInstances',
-            :parser  => Fog::Parsers::AWS::EC2::TerminateInstances.new
+            'Action'    => 'TerminateInstances',
+            :idempotent => true,
+            :parser     => Fog::Parsers::AWS::EC2::TerminateInstances.new
           }.merge!(params))
         end
 
@@ -52,9 +55,11 @@ module Fog
               when 'shutting-down'
                 32
               when 'terminated'
+                48
+              when 'stopping'
                 64
-              when 'rebooting'
-                128
+              when 'stopped'
+                80
               end
               state = { 'name' => 'shutting-down', 'code' => 32}
               response.body['instancesSet'] << {
@@ -76,11 +81,11 @@ module Fog
                 detach_volume(volume['volumeId'])
               end
             end
+
+            response
           else
-            response.status = 400
-            raise(Excon::Errors.status_error({:expects => 200}, response))
+            raise Fog::AWS::EC2::NotFound.new("The instance ID '#{instance_id}' does not exist")
           end
-          response
         end
 
       end
