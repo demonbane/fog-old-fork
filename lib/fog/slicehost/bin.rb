@@ -1,42 +1,31 @@
-module Slicehost
+class Slicehost < Fog::Bin
   class << self
-    if Fog.credentials[:slicehost_password]
 
-      def initialized?
-        true
+    def class_for(key)
+      case key
+      when :compute, :slices
+        Fog::Slicehost::Compute
+      else 
+        raise ArgumentError, "Unrecognized service: #{key}"
       end
-
-      def [](service)
-        @@connections ||= Hash.new do |hash, key|
-          credentials = Fog.credentials.reject do |k,v|
-            ![:slicehost_password].include?(k)
-          end
-          hash[key] = case key
-          when :slices
-            Fog::Slicehost.new(credentials)
-          end
-        end
-        @@connections[service]
-      end
-
-      def flavors
-        self[:slices].flavors
-      end
-
-      def images
-        self[:slices].images
-      end
-
-      def servers
-        self[:slices].servers
-      end
-
-    else
-
-      def initialized?
-        false
-      end
-
     end
+
+    def [](service)
+      @@connections ||= Hash.new do |hash, key|
+        if key == :slices
+          location = caller.first
+          warning = "[yellow][WARN] Slicehost[:blocks] is deprecated, use Bluebox[:compute] instead[/]"
+          warning << " [light_black](" << location << ")[/] "
+          Formatador.display_line(warning)
+        end
+        hash[key] = class_for(key).new
+      end
+      @@connections[service]
+    end
+
+    def services
+      [:compute]
+    end
+
   end
 end

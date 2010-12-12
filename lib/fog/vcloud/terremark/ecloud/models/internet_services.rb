@@ -1,13 +1,9 @@
-module Fog
-  module Vcloud
-    module Terremark
-      module Ecloud
+require 'fog/vcloud/terremark/ecloud/models/internet_service'
 
-        module Real
-          def internet_services(options = {})
-            @internet_services ||= Fog::Vcloud::Terremark::Ecloud::InternetServices.new(options.merge(:connection => self))
-          end
-        end
+module Fog
+  class Vcloud
+    module Terremark
+      class Ecloud
 
         class InternetServices < Fog::Vcloud::Collection
 
@@ -16,6 +12,7 @@ module Fog
           attribute :href, :aliases => :Href
 
           def all
+            check_href! :message => "the Internet Services for the Vdc you want to enumerate"
             if data = connection.get_internet_services(href).body[:InternetService]
               load(data)
             end

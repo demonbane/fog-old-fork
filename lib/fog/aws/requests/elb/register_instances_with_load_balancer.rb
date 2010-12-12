@@ -1,6 +1,6 @@
 module Fog
   module AWS
-    module ELB
+    class ELB
       class Real
 
         require 'fog/aws/parsers/elb/register_instances_with_load_balancer'
@@ -20,7 +20,7 @@ module Fog
         #       * 'Instances'<~Array> - array of hashes describing instances currently enabled
         #         * 'InstanceId'<~String>
         def register_instances_with_load_balancer(instance_ids, lb_name)
-          params = AWS.indexed_param('Instances.member.%.InstanceId', [*instance_ids], 1)
+          params = AWS.indexed_param('Instances.member.%d.InstanceId', [*instance_ids])
           request({
             'Action'           => 'RegisterInstancesWithLoadBalancer',
             'LoadBalancerName' => lb_name,

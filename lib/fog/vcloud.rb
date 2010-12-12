@@ -1,11 +1,12 @@
+require 'nokogiri'
+require 'fog/core/parser'
+
 require 'builder'
 require 'fog/vcloud/model'
 require 'fog/vcloud/collection'
 require 'fog/vcloud/generators'
-require 'fog/vcloud/extension'
-require 'fog/vcloud/terremark/ecloud'
-require 'fog/vcloud/terremark/vcloud'
-
+require 'fog/vcloud/mock_data_classes'
+# ecloud/vcloud requires at the bottom so that the following will be defined
 
 module URI
   class Generic
@@ -16,14 +17,14 @@ module URI
 end
 
 module Fog
-  module Vcloud
-    extend Fog::Service
+  class Vcloud < Fog::Service
 
-    requires :username, :password, :versions_uri
+    requires :username, :password, :module, :versions_uri, &inject_parameter_specs
+    recognizes :version, :persistent, &inject_parameter_specs
 
     model_path 'fog/vcloud/models'
-    model 'vdc'
-    model 'vdcs'
+    model :vdc
+    collection :vdcs
 
     request_path 'fog/vcloud/requests'
     request :login
@@ -32,23 +33,62 @@ module Fog
     request :get_organization
     request :get_network
 
-    def self.after_new(instance, options={})
-      if mod = options[:module]
-        instance.extend eval("#{mod}")
-      end 
-      instance
-    end
-
     class UnsupportedVersion < Exception ; end
 
-    class Real
-      extend Fog::Vcloud::Generators
-
-      attr_accessor :login_uri
+    module Shared
       attr_reader :versions_uri
 
+      def default_organization_uri
+        @default_organization_uri ||= begin
+          unless @login_results
+            do_login
+          end
+          case @login_results.body[:Org]
+          when Array
+            @login_results.body[:Org].first[:href]
+          when Hash
+            @login_results.body[:Org][:href]
+          else
+            nil
+          end
+        end
+      end
+
+      # login handles the auth, but we just need the Set-Cookie
+      # header from that call.
+      def do_login
+        @login_results = login
+        @cookie = @login_results.headers['Set-Cookie']
+      end
+
+      def supported_versions
+        @supported_versions ||= get_versions(@versions_uri).body[:VersionInfo]
+      end
+
+      def xmlns
+        { "xmlns" => "http://www.vmware.com/vcloud/v0.8",
+          "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
+          "xmlns:xsd" => "http://www.w3.org/2001/XMLSchema" }
+      end
+
+      # private
+
+      def ensure_unparsed(uri)
+        if uri.is_a?(String)
+          uri
+        else
+          uri.to_s
+        end
+      end
+
+    end
+
+    class Real
+      include Shared
+      extend Fog::Vcloud::Generators
+
       def supporting_versions
-        ["v0.8"]
+        ["0.8"]
       end
 
       def initialize(options = {})
@@ -77,12 +117,6 @@ module Fog
         end
       end
 
-      def xmlns
-        { "xmlns" => "http://www.vmware.com/vcloud/v0.8",
-          "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
-          "xmlns:xsd" => "http://www.w3.org/2001/XMLSchema" }
-      end
-
       def reload
         @connections.each_value { |k,v| v.reset if v }
       end
@@ -102,10 +136,6 @@ module Fog
         end
       end
 
-      def supported_versions
-        @supported_versions ||= get_versions(@versions_uri).body[:VersionInfo]
-      end
-
       private
 
       def ensure_parsed(uri)
@@ -113,14 +143,6 @@ module Fog
           URI.parse(uri)
         else
           uri
-        end
-      end
-
-      def ensure_unparsed(uri)
-        if uri.is_a?(String)
-          uri
-        else
-          uri.to_s
         end
       end
 
@@ -227,7 +249,10 @@ module Fog
       end
     end
 
-    class Mock < Real
+    class Mock
+      include Shared
+      include MockDataClasses
+
       def self.base_url
         "https://fakey.com/api/v0.8"
       end
@@ -237,128 +262,41 @@ module Fog
       end
 
       def self.data( base_url = self.base_url )
-        @mock_data ||=
-        {
-          :versions => [
-            { :version => "v0.8", :login_url => "#{base_url}/login", :supported => true }
-          ],
-          :vdc_resources => [
-            {
-              :type => "application/vnd.vmware.vcloud.vApp+xml",
-              :href => "#{base_url}/vapp/61",
-              :name => "Foo App 1"
-            },
-            {
-              :type => "application/vnd.vmware.vcloud.vApp+xml",
-              :href => "#{base_url}/vapp/62",
-              :name => "Bar App 1"
-            },
-            {
-              :type => "application/vnd.vmware.vcloud.vApp+xml",
-              :href => "#{base_url}/vapp/63",
-              :name => "Bar App 2"
-            }
-          ],
-          :organizations =>
-          [
-            {
-              :info => {
-                :href => "#{base_url}/org/1",
-                :name => "Boom Inc.",
-              },
-              :vdcs => [
+        MockDataClasses::Base.base_url = base_url
 
-                { :href => "#{base_url}/vdc/21",
-                  :id => "21",
-                  :name => "Boomstick",
-                  :storage => { :used => "105", :allocated => "200" },
-                  :cpu => { :allocated => "10000" },
-                  :memory => { :allocated => "20480" },
-                  :networks => [
-                    { :id => "31",
-                      :href => "#{base_url}/network/31",
-                      :name => "1.2.3.0/24",
-                      :subnet => "1.2.3.0/24",
-                      :gateway => "1.2.3.1",
-                      :netmask => "255.255.255.0",
-                      :dns => "8.8.8.8",
-                      :features => [
-                        { :type => :FenceMode, :value => "isolated" }
-                      ],
-                      :ips => { "1.2.3.3" => "Broom 1", "1.2.3.4" => "Broom 2", "1.2.3.10" => "Email" }
-                    },
-                    { :id => "32",
-                      :href => "#{base_url}/network/32",
-                      :name => "4.5.6.0/24",
-                      :subnet => "4.5.6.0/24",
-                      :gateway => "4.5.6.1",
-                      :netmask => "255.255.255.0",
-                      :dns => "8.8.8.8",
-                      :features => [
-                        { :type => :FenceMode, :value => "isolated" }
-                      ],
-                      :ips => { }
-                    },
-                  ],
-                  :vms => [
-                    { :href => "#{base_url}/vap/41",
-                      :name => "Broom 1"
-                    },
-                    { :href => "#{base_url}/vap/42",
-                      :name => "Broom 2"
-                    },
-                    { :href => "#{base_url}/vap/43",
-                      :name => "Email!"
-                    }
-                  ]
-                },
-                { :href => "#{base_url}/vdc/22",
-                  :id => "22",
-                  :storage => { :used => "40", :allocated => "150" },
-                  :cpu => { :allocated => "1000" },
-                  :memory => { :allocated => "2048" },
-                  :name => "Rock-n-Roll",
-                  :networks => [
-                    { :id => "33",
-                      :href => "#{base_url}/network/33",
-                      :name => "7.8.9.0/24",
-                      :subnet => "7.8.9.0/24",
-                      :gateway => "7.8.9.1",
-                      :dns => "8.8.8.8",
-                      :netmask => "255.255.255.0",
-                      :features => [
-                        { :type => :FenceMode, :value => "isolated" }
-                      ],
-                      :ips => { "7.8.9.10" => "Master Blaster" }
-                    }
-                  ],
-                  :vms => [
-                    { :href => "#{base_url}/vap/44",
-                      :name => "Master Blaster"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      end
+        @mock_data ||= MockData.new.tap do |mock_data|
+          mock_data.versions << MockVersion.new(:version => "v0.8", :supported => true)
 
-      def vdc_from_uri(uri)
-        match = Regexp.new(%r:.*/vdc/(\d+):).match(uri.to_s)
-        if match
-          mock_data[:organizations].map { |org| org[:vdcs] }.flatten.detect { |vdc| vdc[:id] == match[1] }
+          mock_data.organizations << MockOrganization.new(:name => "Boom Inc.").tap do |mock_organization|
+            mock_organization.vdcs << MockVdc.new(:name => "Boomstick").tap do |mock_vdc|
+              mock_vdc.catalog.items << MockCatalogItem.new(:name => "Item 0").tap do |mock_catalog_item|
+                mock_catalog_item.disks << MockVirtualMachineDisk.new(:size => 25 * 1024)
+              end
+              mock_vdc.catalog.items << MockCatalogItem.new(:name => "Item 1").tap do |mock_catalog_item|
+                mock_catalog_item.disks << MockVirtualMachineDisk.new(:size => 25 * 1024)
+              end
+              mock_vdc.catalog.items << MockCatalogItem.new(:name => "Item 2").tap do |mock_catalog_item|
+                mock_catalog_item.disks << MockVirtualMachineDisk.new(:size => 25 * 1024)
+              end
+
+              mock_vdc.networks << MockNetwork.new({ :subnet => "1.2.3.0/24" }, mock_vdc)
+              mock_vdc.networks << MockNetwork.new({ :subnet => "4.5.6.0/24" }, mock_vdc)
+
+              mock_vdc.virtual_machines << MockVirtualMachine.new({ :name => "Broom 1", :ip => "1.2.3.3" }, mock_vdc)
+              mock_vdc.virtual_machines << MockVirtualMachine.new({ :name => "Broom 2", :ip => "1.2.3.4" }, mock_vdc)
+              mock_vdc.virtual_machines << MockVirtualMachine.new({ :name => "Email!", :ip => "1.2.3.10" }, mock_vdc)
+            end
+
+            mock_organization.vdcs << MockVdc.new(:name => "Rock-n-Roll", :storage_allocated => 150, :storage_used => 40, :cpu_allocated => 1000, :memory_allocated => 2048).tap do |mock_vdc|
+              mock_vdc.networks << MockNetwork.new({ :subnet => "7.8.9.0/24" }, mock_vdc)
+
+              mock_vdc.virtual_machines << MockVirtualMachine.new({ :name => "Master Blaster", :ip => "7.8.9.10" }, mock_vdc)
+            end
+          end
         end
       end
 
-      def ip_from_uri(uri)
-        match = Regexp.new(%r:.*/publicIp/(\d+):).match(uri.to_s)
-        if match
-          mock_data[:organizations].map { |org| org[:vdcs] }.flatten.map { |vdc| vdc[:public_ips] }.flatten.compact.detect { |public_ip| public_ip[:id] == match[1] }
-        end
-      end
-
-      def initialize(credentials = {})
+      def initialize(options = {})
         @versions_uri = URI.parse('https://vcloud.fakey.com/api/versions')
       end
 
@@ -392,3 +330,6 @@ module Fog
     end
   end
 end
+
+require 'fog/vcloud/terremark/ecloud'
+require 'fog/vcloud/terremark/vcloud'

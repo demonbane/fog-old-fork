@@ -1,31 +1,28 @@
 module Fog
   module AWS
-    module ELB
-      extend Fog::Service
+    class ELB < Fog::Service
 
-      requires :aws_access_key_id, :aws_secret_access_key
+      requires :aws_access_key_id, :aws_secret_access_key, &inject_parameter_specs
+      recognizes :region, :host, :path, :port, :scheme, :persistent, &inject_parameter_specs
 
       request_path 'fog/aws/requests/elb'
-      request 'create_load_balancer'
-      request 'delete_load_balancer'
-      request 'deregister_instances_from_load_balancer'
-      request 'describe_instance_health'
-      request 'describe_load_balancers'
-      request 'disable_availability_zones_for_load_balancer'
-      request 'enable_availability_zones_for_load_balancer'
-      request 'register_instances_with_load_balancer'
+      request :create_load_balancer
+      request :delete_load_balancer
+      request :deregister_instances_from_load_balancer
+      request :describe_instance_health
+      request :describe_load_balancers
+      request :disable_availability_zones_for_load_balancer
+      request :enable_availability_zones_for_load_balancer
+      request :register_instances_with_load_balancer
 
       class Mock
-        include Collections
 
         def initialize(options={})
-          Fog::Mock.not_implemented
         end
 
       end
 
       class Real
-        include Collections
 
         # Initialize connection to ELB
         #
@@ -49,6 +46,7 @@ module Fog
           @aws_access_key_id      = options[:aws_access_key_id]
           @aws_secret_access_key  = options[:aws_secret_access_key]
           @hmac = Fog::HMAC.new('sha256', @aws_secret_access_key)
+          options[:region] ||= 'us-east-1'
           @host = options[:host] || case options[:region]
           when 'ap-southeast-1'
             'elasticloadbalancing.ap-southeast-1.amazonaws.com'
@@ -59,11 +57,12 @@ module Fog
           when 'us-west-1'
             'elasticloadbalancing.us-west-1.amazonaws.com'
           else
-            'elasticloadbalancing.amazonaws.com'
+            raise ArgumentError, "Unknown region: #{options[:region].inspect}"
           end
+          @path       = options[:path]      || '/'
           @port       = options[:port]      || 443
           @scheme     = options[:scheme]    || 'https'
-          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}", options[:persistent])
+          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}#{@path}", options[:persistent])
         end
 
         def reload
@@ -82,6 +81,7 @@ module Fog
               :aws_access_key_id  => @aws_access_key_id,
               :hmac               => @hmac,
               :host               => @host,
+              :path               => @path,
               :version            => '2009-11-25'
             }
           )

@@ -1,34 +1,31 @@
-module Local
+class Local < Fog::Bin
   class << self
-    if Fog.credentials[:local_root]
 
-      def initialized?
-        true
+    def class_for(key)
+      case key
+      when :files, :storage
+        Fog::Local::Storage
+      else 
+        raise ArgumentError, "Unsupported #{self} service: #{key}"
       end
-
-      def [](service)
-        @@connections ||= Hash.new do |hash, key|
-          credentials = Fog.credentials.reject do |k,v|
-            ![:local_root].include?(k)
-          end
-          hash[key] = case key
-          when :files
-            Fog::Local.new(credentials)
-          end
-        end
-        @@connections[service]
-      end
-
-      def directories
-        self[:files].directories
-      end
-
-    else
-
-      def initialized?
-        false
-      end
-
     end
+
+    def [](service)
+      @@connections ||= Hash.new do |hash, key|
+        if key == :files
+          location = caller.first
+          warning = "[yellow][WARN] Local[:files] is deprecated, use Local[:storage] instead[/]"
+          warning << " [light_black](" << location << ")[/] "
+          Formatador.display_line(warning)
+        end
+        hash[key] = class_for(key).new
+      end
+      @@connections[service]
+    end
+
+    def services
+      [:storage]
+    end
+
   end
 end

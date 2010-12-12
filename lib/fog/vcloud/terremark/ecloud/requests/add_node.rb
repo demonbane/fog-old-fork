@@ -1,22 +1,8 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
-        module Real
-
-          def add_node(nodes_uri, node_data)
-            validate_node_data(node_data)
-
-            request(
-              :body     => generate_node_request(node_data),
-              :expects  => 200,
-              :headers  => {'Content-Type' => 'application/vnd.tmrk.ecloud.nodeService+xml'},
-              :method   => 'POST',
-              :uri      => nodes_uri,
-              :parse    => true
-            )
-          end
-
+      class Ecloud
+        module Shared
           private
 
           def generate_node_request(node_data)
@@ -43,17 +29,32 @@ module Fog
           end
         end
 
-        module Mock
+        class Real
+          include Shared
 
           def add_node(nodes_uri, node_data)
             validate_node_data(node_data)
-            nodes_uri = ensure_unparsed(nodes_uri)
-            service_uri = nodes_uri.gsub('/nodeServices','')
-            ip, service = mock_ip_and_service_from_service_url(service_uri)
-            if ip and service
-              id = rand(1000)
-              service[:nodes] << node_data.merge!( :id => id.to_s, :href => Fog::Vcloud::Terremark::Ecloud::Mock.extension_url + "/nodeService/#{id}" )
-              mock_it 200, mock_node_service_response(node_data, ecloud_xmlns), { 'Content-Type' => 'application/vnd.tmrk.ecloud.nodeService+xml' }
+
+            request(
+              :body     => generate_node_request(node_data),
+              :expects  => 200,
+              :headers  => {'Content-Type' => 'application/vnd.tmrk.ecloud.nodeService+xml'},
+              :method   => 'POST',
+              :uri      => nodes_uri,
+              :parse    => true
+            )
+          end
+        end
+
+        class Mock
+          include Shared
+
+          def add_node(nodes_uri, node_data)
+            validate_node_data(node_data)
+            if node_collection = mock_data.public_ip_internet_service_node_collection_from_href(ensure_unparsed(nodes_uri))
+              new_node = MockPublicIpInternetServiceNode.new(node_data, node_collection)
+              node_collection.items << new_node
+              mock_it 200, mock_node_service_response(new_node), { 'Content-Type' => 'application/vnd.tmrk.ecloud.nodeService+xml' }
             else
               mock_error 200, "401 Unauthorized"
             end

@@ -1,7 +1,7 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
         class Vdc < Fog::Vcloud::Model
 
           identity :href

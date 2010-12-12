@@ -1,43 +1,31 @@
-module Bluebox
+class Bluebox < Fog::Bin
   class << self
 
-    if Fog.credentials[:bluebox_api_key]
-
-      def initialized?
-        true
+    def class_for(key)
+      case key
+      when :blocks, :compute
+        Fog::Bluebox::Compute
+      else 
+        raise ArgumentError, "Unsupported #{self} service: #{key}"
       end
-
-      def [](service)
-        @@connections ||= Hash.new do |hash, key|
-          credentials = Fog.credentials.reject do |k,v|
-            ![:bluebox_api_key, :bluebox_customer_id].include?(k)
-          end
-          hash[key] = case key
-          when :blocks
-            Fog::Bluebox.new(credentials)
-          end
-        end
-        @@connections[service]
-      end
-
-      def flavors
-        self[:blocks].flavors
-      end
-
-      def images
-        self[:blocks].images
-      end
-
-      def servers
-        self[:blocks].servers
-      end
-
-    else
-
-      def initialized?
-        false
-      end
-
     end
+
+    def [](service)
+      @@connections ||= Hash.new do |hash, key|
+        if key == :blocks
+          location = caller.first
+          warning = "[yellow][WARN] Bluebox[:blocks] is deprecated, use Bluebox[:compute] instead[/]"
+          warning << " [light_black](" << location << ")[/] "
+          Formatador.display_line(warning)
+        end
+        hash[key] = class_for(key).new
+      end
+      @@connections[service]
+    end
+
+    def services
+      [:compute]
+    end
+
   end
 end

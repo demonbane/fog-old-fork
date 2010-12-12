@@ -1,7 +1,7 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
 
         class Catalog < Fog::Vcloud::Collection
 
@@ -10,6 +10,7 @@ module Fog
           attribute :href, :aliases => :Href
 
           def all
+            check_href!
             if data = connection.get_catalog(href).body[:CatalogItems][:CatalogItem]
               load(data)
             end

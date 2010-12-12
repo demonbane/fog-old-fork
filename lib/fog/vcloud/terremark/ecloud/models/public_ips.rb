@@ -1,19 +1,9 @@
+require 'fog/vcloud/terremark/ecloud/models/public_ip'
+
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
-
-        module Mock
-          def public_ips(options = {})
-            @public_ips ||= Fog::Vcloud::Terremark::Ecloud::PublicIps.new(options.merge(:connection => self))
-          end
-        end
-
-        module Real
-          def public_ips(options = {})
-            @public_ips ||= Fog::Vcloud::Terremark::Ecloud::PublicIps.new(options.merge(:connection => self))
-          end
-        end
+      class Ecloud
 
         class PublicIps < Fog::Vcloud::Collection
 
@@ -28,6 +18,7 @@ module Fog
           #all_request lambda { |public_ips| public_ips.connection.get_public_ips(public_ips.href) }
 
           def all
+            check_href!(:message => "the Public Ips href of the Vdc you want to enumerate")
             if data = connection.get_public_ips(href).body[:PublicIPAddress]
               load(data)
             end

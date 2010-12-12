@@ -1,6 +1,6 @@
 module Fog
   module AWS
-    module ELB
+    class ELB
       class Real
 
         require 'fog/aws/parsers/elb/describe_instance_health'
@@ -23,7 +23,7 @@ module Fog
         #         * 'InstanceId'<~String>
         #         * 'ReasonCode'<~String>
         def describe_instance_health(lb_name, instance_ids = [])
-          params = AWS.indexed_param('Instances.member.%.InstanceId', [*instance_ids], 1)
+          params = AWS.indexed_param('Instances.member.%d.InstanceId', [*instance_ids])
           request({
             'Action'           => 'DescribeInstanceHealth',
             'LoadBalancerName' => lb_name,

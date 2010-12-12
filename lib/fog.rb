@@ -1,14 +1,10 @@
 require 'rubygems'
 require 'base64'
 require 'cgi'
-require 'digest/md5'
 require 'excon'
 require 'formatador'
-require 'json'
-require 'mime/types'
-require 'net/ssh'
-require 'nokogiri'
 require 'time'
+require 'named-parameters'
 
 __DIR__ = File.dirname(__FILE__)
 
@@ -16,32 +12,14 @@ $LOAD_PATH.unshift __DIR__ unless
   $LOAD_PATH.include?(__DIR__) ||
   $LOAD_PATH.include?(File.expand_path(__DIR__))
 
-require 'fog/attributes'
-require 'fog/collection'
-require 'fog/connection'
-require 'fog/deprecation'
-require 'fog/errors'
-require 'fog/hmac'
-require 'fog/model'
-require 'fog/parser'
-require 'fog/service'
-require 'fog/ssh'
-
-require 'fog/aws'
-require 'fog/bluebox'
-require 'fog/go_grid'
-require 'fog/linode'
-require 'fog/local'
-require 'fog/new_servers'
-require 'fog/rackspace'
-require 'fog/slicehost'
-require 'fog/terremark'
-require 'fog/vcloud'
+require 'fog/core'
 
 module Fog
 
+  @mocking = false
+
   unless const_defined?(:VERSION)
-    VERSION = '0.2.21'
+    VERSION = '0.3.31'
   end
 
   module Mock
@@ -59,6 +37,14 @@ module Fog
       raise Fog::Errors::MockNotImplemented.new("Contributions welcome!")
     end
 
+  end
+
+  def self.bin
+    @bin ||= false
+  end
+
+  def self.bin=(new_bin)
+    @bin = new_bin
   end
 
   def self.mock!
@@ -82,5 +68,18 @@ module Fog
       { :duration => duration }
     end
   end
-
+  
 end
+
+require 'fog/aws'
+require 'fog/bluebox'
+require 'fog/brightbox'
+require 'fog/go_grid'
+require 'fog/linode'
+require 'fog/local'
+require 'fog/new_servers'
+require 'fog/rackspace'
+require 'fog/slicehost'
+require 'fog/terremark'
+require 'fog/vcloud'
+require 'fog/google'

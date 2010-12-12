@@ -1,7 +1,9 @@
+require 'fog/vcloud/terremark/ecloud/models/task'
+
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
 
         class Tasks < Fog::Vcloud::Collection
 
@@ -10,6 +12,7 @@ module Fog
           attribute :href, :aliases => :Href
 
           def all
+            check_href!
             if data = connection.get_task_list(href).body[:Task]
               load(data)
             end

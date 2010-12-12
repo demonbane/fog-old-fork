@@ -1,4 +1,4 @@
-require 'fog/model'
+require 'fog/core/model'
 
 module Fog
   module Terremark
@@ -8,13 +8,13 @@ module Fog
 
         identity :id
 
-        attribute :end_time,    'endTime'
-        attribute :owner,       'Owner'
-        attribute :result,      'Result'
-        attribute :start_time,  'startTime'
+        attribute :end_time,    :aliases => 'endTime'
+        attribute :owner,       :aliases => 'Owner'
+        attribute :result,      :aliases => 'Result'
+        attribute :start_time,  :aliases => 'startTime'
         attribute :status
-        attribute :link,         'Link'
-        attribute :error,        'Error'
+        attribute :link,        :aliases => 'Link'
+        attribute :error,       :aliases => 'Error'
 
         def initialize(attributes = {})
           new_owner  = attributes.delete('Owner')
@@ -23,11 +23,11 @@ module Fog
           new_cancel_link = attributes.delete('Link')
 
           super
-          @owner  = connection.parse(new_owner)
+          self.owner = connection.parse(new_owner)
           if new_result
-            @result = connection.parse(new_result)
+            self.result = connection.parse(new_result)
           end
-          @error = connection.parse(new_error) if new_error
+          self.error = connection.parse(new_error) if new_error
           @cancel_link = connection.parse(new_cancel_link) if new_cancel_link
         end
 

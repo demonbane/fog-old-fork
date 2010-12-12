@@ -1,15 +1,21 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
 
-        module Real
+        class Real
           basic_request :get_customization_options
         end
 
-        module Mock
-          def get_customization_options( options_uri )
-            Fog::Mock.not_implemented
+        class Mock
+          def get_customization_options(options_uri)
+            builder = Builder::XmlMarkup.new
+            xml = builder.CustomizationParameters(xmlns) do
+              builder.CustomizeNetwork "true"
+              builder.CustomizePassword "false"
+            end
+
+            mock_it 200, xml, "Content-Type" => "application/vnd.tmrk.ecloud.catalogItemCustomizationParameters+xml"
           end
         end
       end

@@ -1,48 +1,45 @@
-module Rackspace
+class Rackspace < Fog::Bin
   class << self
-    if Fog.credentials[:rackspace_api_key] && Fog.credentials[:rackspace_username]
 
-      def initialized?
-        true
+    def class_for(key)
+      case key
+      when :cdn
+        Fog::Rackspace::CDN
+      when :compute, :servers
+        Fog::Rackspace::Compute
+      when :files, :storage
+        Fog::Rackspace::Storage
+      else 
+        raise ArgumentError, "Unrecognized service: #{key}"
       end
-
-      def [](service)
-        @@connections ||= Hash.new do |hash, key|
-          credentials = Fog.credentials.reject do |k,v|
-            ![:rackspace_api_key, :rackspace_username].include?(k)
-          end
-          hash[key] = case key
-          when :files
-            Fog::Rackspace::Files.new(credentials)
-          when :servers
-            Fog::Rackspace::Servers.new(credentials)
-          end
-        end
-        @@connections[service]
-      end
-
-      def directories
-        self[:files].directories
-      end
-
-      def flavors
-        self[:servers].flavors
-      end
-
-      def images
-        self[:servers].images
-      end
-
-      def servers
-        self[:servers].servers
-      end
-      
-    else
-
-      def initialized?
-        false
-      end
-
     end
+
+    def [](service)
+      @@connections ||= Hash.new do |hash, key|
+        klazz = class_for(key)
+        hash[key] = case key
+        when :files
+          location = caller.first
+          warning = "[yellow][WARN] Rackspace[:files] is deprecated, use Rackspace[:storage] instead[/]"
+          warning << " [light_black](" << location << ")[/] "
+          Formatador.display_line(warning)
+          klazz.new
+        when :servers
+          location = caller.first
+          warning = "[yellow][WARN] Rackspace[:servers] is deprecated, use Rackspace[:compute] instead[/]"
+          warning << " [light_black](" << location << ")[/] "
+          Formatador.display_line(warning)
+          klazz.new
+        else
+          klazz.new
+        end
+      end
+      @@connections[service]
+    end
+
+    def services
+      [:cdn, :compute, :storage]
+    end
+
   end
 end

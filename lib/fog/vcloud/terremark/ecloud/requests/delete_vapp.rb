@@ -1,15 +1,27 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
 
-        module Real
+        class Real
           basic_request :delete_vapp, 202, "DELETE"
         end
 
-        module Mock
+        class Mock
           def delete_vapp(vapp_uri)
-            Fog::Mock.not_implemented
+            if virtual_machine = mock_data.virtual_machine_from_href(vapp_uri)
+              vdc = virtual_machine._parent
+
+              if vdc.internet_service_collection.items.detect {|is| is.node_collection.items.any? {|isn| isn.ip_address == virtual_machine.ip } } ||
+                  virtual_machine.status != 2
+                mock_it 202, '', {}
+              else
+                vdc.virtual_machines.delete(virtual_machine)
+                mock_it 202, '', { "Location" => mock_data.base_url + "/some_tasks/1234" }
+              end
+            else
+              mock_error 200, "401 Unauthorized"
+            end
           end
         end
       end

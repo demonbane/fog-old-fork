@@ -1,9 +1,9 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
-
-        module Real
+      class Ecloud
+        module Shared
+          private
 
           def validate_instantiate_vapp_template_options(catalog_item_uri, options)
             valid_opts = [:name, :vdc_uri, :network_uri, :cpus, :memory, :row, :group]
@@ -74,6 +74,10 @@ module Fog
               }
             }
           end
+        end
+
+        class Real
+          include Shared
 
           def instantiate_vapp_template(catalog_item_uri, options = {})
             validate_instantiate_vapp_template_options(catalog_item_uri, options)
@@ -89,9 +93,49 @@ module Fog
           end
         end
 
-        module Mock
-          def instantiate_vapp_template(vdc_uri)
-            Fog::Mock.not_implemented
+        class Mock
+          include Shared
+
+          #
+          # Based on
+          # http://support.theenterprisecloud.com/kb/default.asp?id=554&Lang=1&SID=
+          #
+
+          def instantiate_vapp_template(catalog_item_uri, options = {})
+            validate_instantiate_vapp_template_options(catalog_item_uri, options)
+            catalog_item = mock_data.catalog_item_from_href(catalog_item_uri)
+
+            xml = nil
+            if vdc = mock_data.vdc_from_href(options[:vdc_uri])
+              if network = mock_data.network_from_href(options[:network_uri])
+                new_vm = MockVirtualMachine.new({ :name => options[:name], :ip => network.random_ip, :cpus => options[:cpus], :memory => options[:memory] }, vdc)
+                new_vm.disks.push(*catalog_item.disks.dup)
+                vdc.virtual_machines << new_vm
+
+                xml = generate_instantiate_vapp_template_response(new_vm)
+              end
+            end
+
+            if xml
+              mock_it 200, xml, {'Content-Type' => 'application/xml'}
+            else
+              mock_error 200, "401 Unauthorized"
+            end
+          end
+
+          private
+
+          def generate_instantiate_vapp_template_response(vapp)
+            builder = Builder::XmlMarkup.new
+            builder.VApp(xmlns.merge(
+                                     :href => vapp.href,
+                                     :type => "application/vnd.vmware.vcloud.vApp+xml",
+                                     :name => vapp.name,
+                                     :status => 0,
+                                     :size => 4
+                                     )) {
+              builder.Link(:rel => "up", :href => vapp._parent.href, :type => "application/vnd.vmware.vcloud.vdc+xml")
+            }
           end
         end
       end

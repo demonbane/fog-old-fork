@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'rake'
+require 'bundler/setup'
 require 'date'
 
 #############################################################################
@@ -45,11 +45,18 @@ end
 
 task :default => :test
 
-require 'rake/testtask'
-Rake::TestTask.new(:test) do |test|
-  test.libs << 'lib' << 'test'
-  test.pattern = 'test/**/test_*.rb'
-  test.verbose = true
+task :test do
+  sh("export FOG_MOCK=true  && bundle exec spec -cfs spec") &&
+  sh("export FOG_MOCK=true  && bundle exec shindo tests") &&
+  sh("export FOG_MOCK=false && bundle exec spec -cfs spec") &&
+  sh("export FOG_MOCK=false && bundle exec shindo tests")
+end
+
+task :ci do
+  sh("export FOG_MOCK=true  && bundle exec spec spec") &&
+  sh("export FOG_MOCK=true  && bundle exec shindont tests") &&
+  sh("export FOG_MOCK=false && bundle exec spec spec") &&
+  sh("export FOG_MOCK=false && bundle exec shindont tests")
 end
 
 desc "Generate RCov test coverage and open in your browser"
@@ -75,20 +82,6 @@ end
 
 #############################################################################
 #
-# Custom tasks (add your own tasks here)
-#
-#############################################################################
-
-require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new(:spec) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.spec_opts = ['--colour', "--format", "specdoc"]
-  spec.spec_files = FileList['spec/**/*_spec.rb']
-end
-
-
-#############################################################################
-#
 # Packaging tasks
 #
 #############################################################################
@@ -98,7 +91,7 @@ task :release => :build do
     puts "You must be on the master branch to release!"
     exit!
   end
-  sh "sudo gem install pkg/#{name}-#{version}.gem"
+  sh "gem install pkg/#{name}-#{version}.gem"
   sh "git commit --allow-empty -a -m 'Release #{version}'"
   sh "git tag v#{version}"
   sh "git push origin master"

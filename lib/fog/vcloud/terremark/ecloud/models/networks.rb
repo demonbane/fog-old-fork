@@ -1,13 +1,9 @@
-module Fog
-  module Vcloud
-    module Terremark
-      module Ecloud
+require 'fog/vcloud/terremark/ecloud/models/network'
 
-        module Real
-          def networks(options = {})
-            @networks ||= Fog::Vcloud::Terremark::Ecloud::Networks.new(options.merge(:connection => self))
-          end
-        end
+module Fog
+  class Vcloud
+    module Terremark
+      class Ecloud
 
         class Networks < Fog::Vcloud::Collection
 
@@ -18,6 +14,7 @@ module Fog
           attribute :href
 
           def all
+            check_href!("Vdc")
             if data = connection.get_vdc(href).body[:AvailableNetworks][:Network]
               load(data)
             end

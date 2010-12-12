@@ -1,25 +1,17 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
 
-        module Real
+        class Real
           basic_request :delete_internet_service, 200, 'DELETE', {}, ""
         end
 
-        module Mock
-
+        class Mock
           def delete_internet_service(service_uri)
+            if public_ip_internet_service = mock_data.public_ip_internet_service_from_href(service_uri)
+              public_ip_internet_service._parent.items.delete(public_ip_internet_service)
 
-            deleted = false
-            if ip = mock_ip_from_service_url(service_uri)
-              if service = ip[:services].detect { |service| service[:href] == service_uri }
-                ip[:services].delete(service)
-                deleted = true
-              end
-            end
-
-            if deleted
               mock_it 200, '', { }
             else
               mock_error 200, "401 Unauthorized"

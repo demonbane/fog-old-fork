@@ -1,7 +1,9 @@
+require 'fog/vcloud/terremark/ecloud/models/server'
+
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
 
         class Servers < Fog::Vcloud::Collection
 
@@ -12,6 +14,7 @@ module Fog
           attribute :href, :aliases => :Href
 
           def all
+            check_href!(:parent => "Vdc")
             load(_vapps)
           end
 

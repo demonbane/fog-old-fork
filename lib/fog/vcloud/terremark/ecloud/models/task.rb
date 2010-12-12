@@ -1,10 +1,10 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
         class Task < Fog::Vcloud::Model
 
-          identity :href, :Href
+          identity :href, :aliases => :Href
 
           ignore_attributes :xmlns, :xmlns_i, :xmlns_xsi, :xmlns_xsd
 
@@ -14,6 +14,7 @@ module Fog
           attribute :owner, :aliases => :Owner
           attribute :start_time, :aliases => :startTime, :type => :time
           attribute :end_time, :aliases => :endTime, :type => :time
+          attribute :error, :aliases => :Error
 
         end
       end

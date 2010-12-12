@@ -1,30 +1,31 @@
-module GoGrid
+class GoGrid < Fog::Bin
   class << self
-    if Fog.credentials[:go_grid_api_key] && Fog.credentials[:go_grid_shared_secret]
 
-      def initialized?
-        true
+    def class_for(key)
+      case key
+      when :compute, :servers
+        Fog::GoGrid::Compute
+      else 
+        raise ArgumentError, "Unsupported #{self} service: #{key}"
       end
-
-      def [](service)
-        @@connections ||= Hash.new do |hash, key|
-          credentials = Fog.credentials.reject do |k,v|
-            ![:go_grid_api_key, :go_grid_shared_secret].include?(k)
-          end
-          hash[key] = case key
-          when :go_grid
-            Fog::GoGrid.new(credentials)
-          end
-        end
-        @@connections[service]
-      end
-
-    else
-
-      def initialized?
-        false
-      end
-
     end
+
+    def [](service)
+      @@connections ||= Hash.new do |hash, key|
+        if key == :servers
+          location = caller.first
+          warning = "[yellow][WARN] GoGrid[:servers] is deprecated, use GoGrid[:compute] instead[/]"
+          warning << " [light_black](" << location << ")[/] "
+          Formatador.display_line(warning)
+        end
+        hash[key] = class_for(key).new
+      end
+      @@connections[service]
+    end
+
+    def services
+      [:compute]
+    end
+
   end
 end

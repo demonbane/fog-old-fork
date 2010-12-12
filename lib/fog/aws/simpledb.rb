@@ -1,23 +1,22 @@
 module Fog
   module AWS
-    module SimpleDB
-      extend Fog::Service
+    class SimpleDB < Fog::Service
 
-      requires :aws_access_key_id, :aws_secret_access_key
-
+      requires :aws_access_key_id, :aws_secret_access_key, &inject_parameter_specs
+      recognizes :host, :nil_string, :path, :port, :scheme, :persistent, &inject_parameter_specs
+      
       request_path 'fog/aws/requests/simpledb'
-      request 'batch_put_attributes'
-      request 'create_domain'
-      request 'delete_attributes'
-      request 'delete_domain'
-      request 'domain_metadata'
-      request 'get_attributes'
-      request 'list_domains'
-      request 'put_attributes'
-      request 'select'
+      request :batch_put_attributes
+      request :create_domain
+      request :delete_attributes
+      request :delete_domain
+      request :domain_metadata
+      request :get_attributes
+      request :list_domains
+      request :put_attributes
+      request :select
 
       class Mock
-        include Collections
 
         def self.data
           @data ||= Hash.new do |hash, key|
@@ -41,7 +40,6 @@ module Fog
       end
 
       class Real
-        include Collections
 
         # Initialize connection to SimpleDB
         #
@@ -66,9 +64,10 @@ module Fog
           @hmac       = Fog::HMAC.new('sha256', @aws_secret_access_key)
           @host       = options[:host]      || 'sdb.amazonaws.com'
           @nil_string = options[:nil_string]|| 'nil'
+          @path       = options[:path]      || '/'
           @port       = options[:port]      || 443
           @scheme     = options[:scheme]    || 'https'
-          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}", options[:persistent])
+          @connection = Fog::Connection.new("#{@scheme}://#{@host}:#{@port}#{@path}", options[:persistent])
         end
 
         private
@@ -140,6 +139,7 @@ module Fog
               :aws_access_key_id  => @aws_access_key_id,
               :hmac               => @hmac,
               :host               => @host,
+              :path               => @path,
               :version            => '2009-04-15'
             }
           )

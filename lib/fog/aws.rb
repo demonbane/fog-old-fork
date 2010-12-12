@@ -1,18 +1,41 @@
-require 'fog/aws/ec2.rb'
-require 'fog/aws/elb.rb'
-require 'fog/aws/s3'
-require 'fog/aws/simpledb'
+require 'nokogiri'
+require 'fog/core/parser'
 
 module Fog
   module AWS
 
-    def self.indexed_param(key, values, offset = 0)
+    extend Fog::Provider
+
+    service_path 'fog/aws'
+    service 'cdn'
+    service 'compute'
+    service 'ec2'
+    service 'elb'
+    service 'iam'
+    service 's3'
+    service 'simpledb'
+    service 'storage'
+
+    def self.indexed_param(key, values)
       params = {}
       unless key.include?('%d')
         key << '.%d'
       end
       [*values].each_with_index do |value, index|
-        params[format(key, index + offset)] = value
+        params[format(key, index + 1)] = value
+      end
+      params
+    end
+
+    def self.indexed_filters(filters)
+      params = {}
+      filters.keys.each_with_index do |key, key_index|
+        key_index += 1
+        params[format('Filter.%d.Name', key_index)] = key
+        [*filters[key]].each_with_index do |value, value_index|
+          value_index += 1
+          params[format('Filter.%d.Value.%d', key_index, value_index)] = value
+        end
       end
       params
     end
@@ -32,7 +55,7 @@ module Fog
           body << "#{key}=#{CGI.escape(value.to_s).gsub(/\+/, '%20')}&"
         end
       end
-      string_to_sign = "POST\n#{options[:host]}\n/\n" << body.chop
+      string_to_sign = "POST\n#{options[:host]}\n#{options[:path]}\n" << body.chop
       signed_string = options[:hmac].sign(string_to_sign)
       body << "Signature=#{CGI.escape(Base64.encode64(signed_string).chomp!).gsub(/\+/, '%20')}"
 
@@ -95,10 +118,6 @@ module Fog
         fingerprint.join(':')
       end
 
-      def self.image_id
-        "ami-#{hex(8)}"
-      end
-
       def self.instance_id
         "i-#{hex(8)}"
       end
@@ -156,7 +175,7 @@ module Fog
       end
 
       private
-
+      
       def self.random_selection(characters, length)
         selection = ''
         length.times do
@@ -180,7 +199,7 @@ module Fog
 
       def self.hex(length)
         max = ('f' * length).to_i(16)
-        rand(max).to_s(16)
+        rand(max).to_s(16).rjust(length, '0')
       end
 
       def self.base64(length)

@@ -1,15 +1,15 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
         class Network < Fog::Vcloud::Model
 
           identity :href
 
-          ignore_attributes :xmlns, :xmlns_xsi, :xmlns_xsd, :xmlns_i, :Configuration
+          ignore_attributes :xmlns, :xmlns_xsi, :xmlns_xsd, :xmlns_i, :Configuration, :Id
 
           attribute :name, :aliases => :Name
-          attribute :id, :aliases => :Id
+          #attribute :id, :aliases => :Id
           attribute :features, :aliases => :Features, :type => :array
           attribute :links, :aliases => :Link, :type => :array
           attribute :type
@@ -41,6 +41,7 @@ module Fog
           def reload
             super
             merge_attributes(extension_data.body)
+            self
           end
 
           private

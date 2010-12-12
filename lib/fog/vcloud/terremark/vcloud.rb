@@ -1,17 +1,21 @@
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Vcloud
-        extend Fog::Vcloud::Extension
-
+      class Vcloud < Fog::Vcloud
         request_path 'fog/vcloud/terremark/vcloud/requests'
         request :get_vdc
 
-        module Real
+        class Real < Fog::Vcloud::Real
+
           def supporting_versions
             ["0.8", "0.8a-ext1.6"]
           end
+
         end
+
+        class Mock < Fog::Vcloud::Mock
+        end
+
       end
     end
   end

@@ -1,7 +1,9 @@
+require 'fog/vcloud/terremark/ecloud/models/ip'
+
 module Fog
-  module Vcloud
+  class Vcloud
     module Terremark
-      module Ecloud
+      class Ecloud
 
         class Ips < Fog::Vcloud::Collection
 
@@ -12,6 +14,7 @@ module Fog
           attribute :href
 
           def all
+            check_href!( :messages => "Ips href of a Network you want to enumerate" )
             if data = connection.get_network_ips(href).body[:IpAddress]
               load(data)
             end
