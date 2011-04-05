@@ -2,9 +2,9 @@ module Fog
   module AWS
     class SimpleDB < Fog::Service
 
-      requires :aws_access_key_id, :aws_secret_access_key, &inject_parameter_specs
-      recognizes :host, :nil_string, :path, :port, :scheme, :persistent, &inject_parameter_specs
-      
+      requires :aws_access_key_id, :aws_secret_access_key
+      recognizes :host, :nil_string, :path, :port, :scheme, :persistent
+
       request_path 'fog/aws/requests/simpledb'
       request :batch_put_attributes
       request :create_domain
@@ -26,14 +26,13 @@ module Fog
           end
         end
 
-        def self.reset_data(keys=data.keys)
-          for key in [*keys]
-            data.delete(key)
-          end
-        end
-
         def initialize(options={})
           @aws_access_key_id = options[:aws_access_key_id]
+          @data = self.class.data[@aws_access_key_id]
+        end
+
+        def reset_data
+          self.class.data.delete(@aws_access_key_id)
           @data = self.class.data[@aws_access_key_id]
         end
 
@@ -44,7 +43,7 @@ module Fog
         # Initialize connection to SimpleDB
         #
         # ==== Notes
-        # options parameter must include values for :aws_access_key_id and 
+        # options parameter must include values for :aws_access_key_id and
         # :aws_secret_access_key in order to create a connection
         #
         # ==== Examples
@@ -59,11 +58,28 @@ module Fog
         # ==== Returns
         # * SimpleDB object with connection to aws.
         def initialize(options={})
+          require 'fog/core/parser'
+
           @aws_access_key_id      = options[:aws_access_key_id]
           @aws_secret_access_key  = options[:aws_secret_access_key]
           @hmac       = Fog::HMAC.new('sha256', @aws_secret_access_key)
-          @host       = options[:host]      || 'sdb.amazonaws.com'
           @nil_string = options[:nil_string]|| 'nil'
+
+          options[:region] ||= 'us-east-1'
+          @host = options[:host] || case options[:region]
+          when 'ap-northeast-1'
+            'sdb.ap-northeast-1.amazonaws.com'
+          when 'ap-southeast-1'
+            'sdb.ap-southeast-1.amazonaws.com'
+          when 'eu-west-1'
+            'sdb.eu-west-1.amazonaws.com'
+          when 'us-east-1'
+            'sdb.amazonaws.com'
+          when 'us-west-1'
+            'sdb.us-west-1.amazonaws.com'
+          else
+            raise ArgumentError, "Unknown region: #{options[:region].inspect}"
+          end
           @path       = options[:path]      || '/'
           @port       = options[:port]      || 443
           @scheme     = options[:scheme]    || 'https'
@@ -140,6 +156,7 @@ module Fog
               :hmac               => @hmac,
               :host               => @host,
               :path               => @path,
+              :port               => @port,
               :version            => '2009-04-15'
             }
           )
@@ -147,7 +164,7 @@ module Fog
           response = @connection.request({
             :body       => body,
             :expects    => 200,
-            :headers    => { 'Content-Type' => 'application/x-www-form-urlencoded' },
+            :headers    => { 'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8' },
             :host       => @host,
             :idempotent => idempotent,
             :method     => 'POST',

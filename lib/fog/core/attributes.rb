@@ -113,7 +113,7 @@ module Fog
 
     module InstanceMethods
 
-      def _dump
+      def _dump(level)
         Marshal.dump(attributes)
       end
 
@@ -152,7 +152,9 @@ module Fog
       def requires(*args)
         missing = []
         for arg in [:connection] | args
-          missing << arg unless send("#{arg}")
+          unless send("#{arg}") || attributes.has_key?(arg)
+            missing << arg
+          end
         end
         unless missing.empty?
           if missing.length == 1

@@ -1,3 +1,5 @@
+require 'nokogiri'
+
 module Fog
   module Parsers
     class Base < Nokogiri::XML::SAX::Document
@@ -13,12 +15,15 @@ module Fog
       end
 
       def characters(string)
-        @value ||= ''
-        @value << string.strip
+        @value = string
       end
 
       def start_element(name, attrs = [])
         @value = nil
+      end
+
+      def attr_value(name, attrs)
+        (entry = attrs.detect {|a, v| a == name }) && entry.last
       end
 
     end

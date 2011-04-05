@@ -10,6 +10,10 @@ module Fog
         service.collections
       end
 
+      def mocked_requests
+        service.mocked_requests
+      end
+
       def requests
         service.requests
       end
@@ -17,26 +21,6 @@ module Fog
     end
 
     class << self
-
-      # this is to accomodate Real implementations of Service subclasses
-      # NOTE: it might be good to enforce parameter specs to Mock classes as well.
-      def inject_parameter_specs
-        lambda do |spec|
-          implementation = "Real"
-          self.const_set(implementation, Class.new) unless self.const_defined? implementation
-          realclass = self.const_get implementation
-
-          if realclass.declared_parameters_for(:'self.new', :required).empty?
-            required = declared_parameters_for(:'self.new', :required)
-            realclass.send(:requires, *required)
-          end
-        
-          if realclass.declared_parameters_for(:'self.new', :optional).empty?
-            optional = declared_parameters_for(:'self.new', :optional)
-            realclass.send(:recognizes, *optional) 
-          end
-        end
-      end
 
       def inherited(child)
         child.class_eval <<-EOS, __FILE__, __LINE__
@@ -54,16 +38,16 @@ module Fog
         EOS
       end
 
-      def requirements
-        declared_parameters_for :'self.new', :required
-      end
-
       def new(options={})
-        if Fog.bin
-          default_credentials = filter_parameters(Fog.credentials)
+        # attempt to load credentials from config file
+        begin
+          default_credentials = Fog.credentials.reject {|key, value| !(recognized | requirements).include?(key)}
           options = default_credentials.merge(options)
+        rescue LoadError
+          # if there are no configured credentials, do nothing
         end
 
+        validate_options(options)
         setup_requirements
 
         if Fog.mocking?
@@ -96,6 +80,15 @@ module Fog
           end
           for request in requests
             require [@request_path, request].join('/')
+            if service::Mock.method_defined?(request)
+              mocked_requests << request
+            else
+              service::Mock.module_eval <<-EOS, __FILE__, __LINE__
+                def #{request}(*args)
+                  Fog::Mock.not_implemented
+                end
+              EOS
+            end
           end
           @required = true
         end
@@ -111,6 +104,10 @@ module Fog
 
       def collections
         @collections ||= []
+      end
+
+      def mocked_requests
+        @mocked_requests ||= []
       end
 
       def model(new_model)
@@ -133,8 +130,34 @@ module Fog
         @requests ||= []
       end
 
-      def reset_data(keys=Mock.data.keys)
-        Mock.reset_data(keys)
+      def requires(*args)
+        requirements.concat(args)
+      end
+
+      def requirements
+        @requirements ||= []
+      end
+
+      def recognizes(*args)
+        recognized.concat(args)
+      end
+
+      def recognized
+        @recognized ||= []
+      end
+
+      def validate_options(options)
+        missing = requirements - options.keys
+        unless missing.empty?
+          raise ArgumentError, "Missing required arguments: #{missing.join(', ')}"
+        end
+
+        unless recognizes.empty?
+          unrecognized = options.keys - requirements - recognized
+          unless unrecognized.empty?
+            raise ArgumentError, "Unrecognized arguments: #{unrecognized.join(', ')}"
+          end
+        end
       end
 
     end

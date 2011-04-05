@@ -14,6 +14,7 @@ module Fog
         #   * 'Protocol'<~String> - Protocol to use. Either HTTP or TCP.
         #   * 'LoadBalancerPort'<~Integer> - The port that the ELB will listen to for outside traffic
         #   * 'InstancePort'<~Integer> - The port on the instance that the ELB will forward traffic to
+        #   * 'SSLCertificateId'<~String> - ARN of the server certificate
         # ==== Returns
         # * response<~Excon::Response>:
         #   * body<~Hash>:
@@ -22,20 +23,23 @@ module Fog
         #     * 'CreateLoadBalancerResult'<~Hash>:
         #       * 'DNSName'<~String> - DNS name for the newly created ELB
         def create_load_balancer(availability_zones, lb_name, listeners)
-          params = ELB.indexed_param('AvailabilityZones.member', [*availability_zones])
+          params = AWS.indexed_param('AvailabilityZones.member', [*availability_zones])
 
           listener_protocol = []
           listener_lb_port = []
           listener_instance_port = []
+          listener_ssl_certificate_id = []
           listeners.each do |listener|
             listener_protocol.push(listener['Protocol'])
             listener_lb_port.push(listener['LoadBalancerPort'])
             listener_instance_port.push(listener['InstancePort'])
+            listener_ssl_certificate_id.push(listener['SSLCertificateId'])
           end
 
           params.merge!(AWS.indexed_param('Listeners.member.%d.Protocol', listener_protocol))
           params.merge!(AWS.indexed_param('Listeners.member.%d.LoadBalancerPort', listener_lb_port))
           params.merge!(AWS.indexed_param('Listeners.member.%d.InstancePort', listener_instance_port))
+          params.merge!(AWS.indexed_param('Listeners.member.%d.SSLCertificateId', listener_ssl_certificate_id))
 
           request({
             'Action'           => 'CreateLoadBalancer',
@@ -45,15 +49,6 @@ module Fog
         end
 
       end
-
-      class Mock
-
-        def create_load_balancer(availability_zones, lb_name, listeners)
-          Fog::Mock.not_implemented
-        end
-
-      end
-
     end
   end
 end

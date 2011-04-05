@@ -24,16 +24,9 @@ module Fog
             'Action'            => 'Select',
             'NextToken'         => next_token,
             'SelectExpression'  => select_expression,
+            :idempotent         => true,
             :parser             => Fog::Parsers::AWS::SimpleDB::Select.new(@nil_string)
           )
-        end
-
-      end
-
-      class Mock
-
-        def select(select_expression, next_token = nil)
-          Fog::Mock.not_implemented
         end
 
       end

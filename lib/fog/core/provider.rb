@@ -1,13 +1,13 @@
 module Fog
   module Provider
 
-    def service_path(new_path)
-      @service_path = new_path
+    def self.extended(base)
+      Fog.providers << base.to_s.split('::').last
     end
 
-    def service(new_service)
+    def service(new_service, path)
       services << new_service
-      require File.join(@service_path, new_service.to_s)
+      require File.join('fog', path)
     end
 
     def services
