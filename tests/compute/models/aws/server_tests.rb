@@ -4,7 +4,7 @@ Shindo.tests("AWS::Compute | monitor", ['aws']) do
     responds_to(association)
   end
 
-  @instance = AWS[:compute].servers.new(:image_id => 'ami-1a837773')
+  @instance = AWS[:compute].servers.new
 
   tests('new instance') do
 
@@ -24,6 +24,12 @@ Shindo.tests("AWS::Compute | monitor", ['aws']) do
 
     @instance.save
 
+    [:id, :availability_zone, :flavor_id, :kernel_id, :image_id, :state].each do |attr|
+      test("instance##{attr} should not contain whitespace") do
+        nil == @instance.send(attr).match(/\s/)
+      end
+    end
+
     test('#monitor = true') do
       @instance.monitor = true
       @instance.monitoring == true
@@ -36,4 +42,5 @@ Shindo.tests("AWS::Compute | monitor", ['aws']) do
 
   end
 
+  @instance.destroy
 end

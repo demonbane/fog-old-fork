@@ -5,13 +5,13 @@ module Fog
 
         require 'fog/aws/parsers/ses/send_raw_email'
 
-        # Delete an existing verified email address
+        # Send a raw email
         #
         # ==== Parameters
         # * RawMessage <~String> - The message to be sent.
         # * Options <~Hash>
-        #   * Source <~String> - The sender's email address
-        #   * Destinations <~Array> - The destination for this email, composed of To:, From:, and CC: fields.
+        #   * Source <~String> - The sender's email address. Takes precenence over Return-Path if specified in RawMessage
+        #   * Destinations <~Array> - All destinations for this email.
         #
         # ==== Returns
         # * response<~Excon::Response>:
@@ -22,7 +22,7 @@ module Fog
         def send_raw_email(raw_message, options = {})
           params = {}
           if options.has_key?('Destinations')
-            params['Destinations'] = AWS.indexed_param('Destinations.member', [*options['Destinations']])
+            params.merge!(AWS.indexed_param('Destinations.member', [*options['Destinations']]))
           end
           if options.has_key?('Source')
             params['Source'] = options['Source']

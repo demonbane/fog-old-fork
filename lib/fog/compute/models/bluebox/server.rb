@@ -21,11 +21,12 @@ module Fog
         attribute :storage
         attribute :template
 
-        attr_accessor :password
+        attr_accessor :password, :lb_applications, :lb_services, :lb_backends
         attr_writer :private_key, :private_key_path, :public_key, :public_key_path, :username
 
         def initialize(attributes={})
-          self.flavor_id ||= '94fd37a7-2606-47f7-84d5-9000deda52ae'
+          self.flavor_id  ||= '94fd37a7-2606-47f7-84d5-9000deda52ae' # Block 1GB Virtual Server
+          self.image_id   ||= '03807e08-a13d-44e4-b011-ebec7ef2c928' # Ubuntu LTS 10.04 64bit
           super
         end
 
@@ -90,6 +91,14 @@ module Fog
             raise(ArgumentError, "password or public_key is required for this operation") if !password && !public_key
             options['ssh_public_key'] = public_key if @public_key
             options['password'] = password if @password
+          end
+
+          if @lb_backends
+            options['lb_backends'] = lb_backends
+          elsif @lb_services
+            options['lb_services'] = lb_services
+          elsif @lb_applications
+            options['lb_applications'] = lb_applications
           end
 
           options['username'] = username

@@ -1,14 +1,13 @@
 Gem::Specification.new do |s|
   s.specification_version = 2 if s.respond_to? :specification_version=
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.rubygems_version = '1.3.5'
 
   ## Leave these as is they will be modified for you by the rake gemspec task.
   ## If your rubyforge_project name is different, then edit it and comment out
   ## the sub! line in the Rakefile
   s.name              = 'fog'
-  s.version           = '0.7.1'
-  s.date              = '2011-03-21'
+  s.version           = '0.7.2'
+  s.date              = '2011-04-05'
   s.rubyforge_project = 'fog'
 
   ## Make sure your summary is short. The description may be as long
@@ -23,17 +22,12 @@ Gem::Specification.new do |s|
   s.email    = 'geemus@gmail.com'
   s.homepage = 'http://github.com/geemus/fog'
 
-  ## This gets added to the $LOAD_PATH so that 'lib/NAME.rb' can be required as
-  ## require 'NAME.rb' or'/lib/NAME/file.rb' can be as require 'NAME/file.rb'
-  s.require_paths = %w[lib]
-
   ## This sections is only necessary if you have C extensions.
   # s.require_paths << 'ext'
   # s.extensions = %w[ext/extconf.rb]
 
   ## If your gem includes any executables, list them here.
   s.executables = ["fog"]
-  s.default_executable = 'fog'
 
   ## Specify any RDoc options here. You'll want to add your README and
   ## LICENSE files to the extra_rdoc_files list.
@@ -43,7 +37,7 @@ Gem::Specification.new do |s|
   ## List your runtime dependencies here. Runtime dependencies are those
   ## that are needed for an end user to actually USE your code.
   s.add_dependency('builder')
-  s.add_dependency('excon', '>=0.6.0')
+  s.add_dependency('excon', '~>0.6.1')
   s.add_dependency('formatador', '>=0.1.3')
   s.add_dependency('json')
   s.add_dependency('mime-types')
